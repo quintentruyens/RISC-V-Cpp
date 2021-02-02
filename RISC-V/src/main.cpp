@@ -1,4 +1,4 @@
-#define OLC_PGE_APPLICATION
+﻿#define OLC_PGE_APPLICATION
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -9,6 +9,7 @@
 #include "CPU.h"
 #include "MemoryMap.h"
 #include "olcPixelGameEngine.h"
+#include "Button.h"
 
 class Visualiser : public olc::PixelGameEngine
 {
@@ -25,6 +26,18 @@ public:
 	Screen<MemoryMap::ScreenBaseAddr, 32, 32>* screen;
 	CPU* cpu;
 
+private:
+	Button* playButton = nullptr;
+	Button* stepButton = nullptr;
+	Button* increaseCpsButton = nullptr;
+	Button* decreaseCpsButton = nullptr;
+
+private:
+	bool running = false;
+	double cps = 1.0; // clocks per second
+	double timeSinceLastCycle = 0.0;
+
+public:
 	std::string hex(uint32_t n, uint8_t d)
 	{
 		std::string s(d, '0');
@@ -60,10 +73,32 @@ public:
 			DrawString(x + 140 * (i % 2), y + 20 + 10 * (i / 2), cpu->regName(i) + ": 0x" + hex(cpu->readReg(i), 8));
 		}
 	}
+	
+	void UpdateButtons()
+	{
+		playButton->Update();
+		stepButton->Update();
+		increaseCpsButton->Update();
+		decreaseCpsButton->Update();
+	}
+
+	void DrawButtons()
+	{
+		playButton->Draw();
+		stepButton->Draw();
+		// convert cps to string
+		std::ostringstream cpsStream;
+		cpsStream << std::setprecision(5) << std::noshowpoint << cps;
+		std::string cpsString = cpsStream.str();
+		DrawString(900, 310, cpsString, olc::WHITE, 2U);
+		increaseCpsButton->Draw();
+		decreaseCpsButton->Draw();
+	}
 
 public:
 	bool OnUserCreate() override
 	{
+		// Build computer
 		ram = new RAM<MemoryMap::Data.BaseAddr, MemoryMap::Data.LimitAddr>();
 		ram->fillFromFile("data.bin", MemoryMap::Data.BaseAddr);
 		bus.connectDevice(ram);
@@ -75,25 +110,40 @@ public:
 		screen = new Screen<MemoryMap::ScreenBaseAddr, 32, 32>();
 		bus.connectDevice(screen);
 
-		cpu = new CPU();
+		cpu = new CPU([this]() mutable { running = false; });
 		cpu->connectBus(&bus);
+
+		// create interface
+		playButton = new Button(this, 900, 200, 50, 50, olc::DARK_CYAN, "play", [this]() mutable { running = !running; });
+		stepButton = new Button(this, 900, 255, 50, 50, olc::DARK_CYAN, "step", [this]() mutable { if (!running) cpu->clock(); });
+		increaseCpsButton = new Button(this, 900, 330, 15, 15, olc::DARK_CYAN, "+", [this]() mutable { cps = cps * 2.0; });
+		decreaseCpsButton = new Button(this, 920, 330, 15, 15, olc::DARK_CYAN, "-", [this]() mutable { cps = cps / 2.0; });
 
 		return true;
 	}
 
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		if (GetKey(olc::Key::SPACE).bPressed)
-		{
-			cpu->clock();
-		}
+		UpdateButtons();
 
+		if (running)
+		{
+			timeSinceLastCycle += fElapsedTime;
+
+			while (timeSinceLastCycle > 1 / cps)
+			{
+				cpu->clock();
+				timeSinceLastCycle -= 1 / cps;
+			}
+		}
+		
 		Clear(olc::DARK_BLUE);
 
-		DrawMemory(2, 2, MemoryMap::Text.BaseAddr, 16, 8);
-		DrawMemory(2, 200, MemoryMap::Data.BaseAddr, 16, 8);
-		DrawCpu(670, 2);
+		DrawMemory(4, 30, MemoryMap::Text.BaseAddr, 16, 8);
+		DrawMemory(4, 200, MemoryMap::Data.BaseAddr, 16, 8);
+		DrawCpu(670, 4);
 		screen->Draw(670, 200, 7, this);
+		DrawButtons();
 
 		return true;
 	}

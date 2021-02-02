@@ -22,8 +22,8 @@ constexpr uint32_t MHARTID = 0xF14;
 
 constexpr uint32_t DEBUG = 0xFC0;
 
-CSR::CSR(CPU* cpu)
-	: cpu(cpu)
+CSR::CSR(CPU* cpu, const std::function<void()>& startDebug)
+	: cpu(cpu), startDebug(startDebug)
 {
 }
 
@@ -80,7 +80,7 @@ bool CSR::read(uint32_t address, uint32_t& value)
 
 	case DEBUG:
 		value = 0;
-		__debugbreak();
+		startDebug();
 		return true;
 
 	default:

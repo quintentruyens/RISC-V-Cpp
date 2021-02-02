@@ -1,13 +1,14 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <functional>
 
 class CPU;
 
 class CSR
 {
 public:
-	CSR(CPU* cpu);
+	CSR(CPU* cpu, const std::function<void()>& startDebug);
 	~CSR();
 
 public:
@@ -21,5 +22,6 @@ private:
 
 private:
 	uint32_t ureg00 = 0;
+	std::function<void()> startDebug;
 };
 

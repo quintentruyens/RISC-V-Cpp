@@ -151,12 +151,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Button.cpp" />
     <ClCompile Include="src\CSR.cpp" />
     <ClCompile Include="src\CPU.cpp" />
     <ClCompile Include="src\Bus.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Button.h" />
     <ClInclude Include="src\Screen.h" />
     <ClInclude Include="src\CSR.h" />
     <ClInclude Include="src\CPU.h" />

@@ -4,8 +4,8 @@
 #include "CPU.h"
 #include "CSR.h"
 
-CPU::CPU()
-	: csr(this)
+CPU::CPU(const std::function<void()>& startDebug)
+	: csr(this, startDebug)
 {
 	opcodeLookup = {
 		&CPU::LOAD,   &CPU::XXX,  &CPU::XXX, &CPU::MISC_MEM, &CPU::OP_IMM, &CPU::AUIPC, &CPU::XXX, &CPU::XXX,

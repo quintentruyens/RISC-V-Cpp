@@ -3,6 +3,7 @@
 #include <string>
 #include <array>
 #include <vector>
+#include <functional>
 #include "Bus.h"
 #include "CSR.h"
 
@@ -71,7 +72,7 @@ namespace InstructionType
 class CPU
 {
 public:
-	CPU();
+	CPU(const std::function<void()>& startDebug);
 	~CPU();
 
 public:
