@@ -157,6 +157,7 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Screen.h" />
     <ClInclude Include="src\CSR.h" />
     <ClInclude Include="src\CPU.h" />
     <ClInclude Include="src\MemoryMap.h" />

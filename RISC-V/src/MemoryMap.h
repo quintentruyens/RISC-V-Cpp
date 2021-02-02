@@ -14,4 +14,6 @@ namespace MemoryMap
 
 	constexpr uint32_t HeapBaseAddr = 0x0104'0000U;
 	constexpr uint32_t StackBaseAddr = 0x03FF'FFFC;
+
+	constexpr uint32_t ScreenBaseAddr = 0xF000'0000;
 }

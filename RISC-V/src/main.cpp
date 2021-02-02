@@ -5,6 +5,7 @@
 #include "Bus.h"
 #include "RAM.h"
 #include "ROM.h"
+#include "Screen.h"
 #include "CPU.h"
 #include "MemoryMap.h"
 #include "olcPixelGameEngine.h"
@@ -21,6 +22,7 @@ public:
 	Bus bus;
 	RAM<MemoryMap::Data.BaseAddr, MemoryMap::Data.LimitAddr>* ram;
 	ROM<MemoryMap::Text.BaseAddr, MemoryMap::Text.LimitAddr>* rom;
+	Screen<MemoryMap::ScreenBaseAddr, 32, 32>* screen;
 	CPU* cpu;
 
 	std::string hex(uint32_t n, uint8_t d)
@@ -64,12 +66,14 @@ public:
 	{
 		ram = new RAM<MemoryMap::Data.BaseAddr, MemoryMap::Data.LimitAddr>();
 		ram->fillFromFile("data.bin", MemoryMap::Data.BaseAddr);
-
 		bus.connectDevice(ram);
 
 		rom = new ROM<MemoryMap::Text.BaseAddr, MemoryMap::Text.LimitAddr>();
 		rom->fillFromFile("text.bin", MemoryMap::Text.BaseAddr);
 		bus.connectDevice(rom);
+
+		screen = new Screen<MemoryMap::ScreenBaseAddr, 32, 32>();
+		bus.connectDevice(screen);
 
 		cpu = new CPU();
 		cpu->connectBus(&bus);
@@ -89,6 +93,7 @@ public:
 		DrawMemory(2, 2, MemoryMap::Text.BaseAddr, 16, 8);
 		DrawMemory(2, 200, MemoryMap::Data.BaseAddr, 16, 8);
 		DrawCpu(670, 2);
+		screen->Draw(670, 200, 7, this);
 
 		return true;
 	}
