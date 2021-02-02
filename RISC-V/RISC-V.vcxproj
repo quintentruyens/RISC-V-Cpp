@@ -151,11 +151,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\CSR.cpp" />
     <ClCompile Include="src\CPU.cpp" />
     <ClCompile Include="src\Bus.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CSR.h" />
     <ClInclude Include="src\CPU.h" />
     <ClInclude Include="src\MemoryMap.h" />
     <ClInclude Include="src\ROM.h" />

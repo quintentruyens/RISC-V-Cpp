@@ -2,14 +2,16 @@
 #include <iostream>
 #include "MemoryMap.h"
 #include "CPU.h"
+#include "CSR.h"
 
 CPU::CPU()
+	: csr(this)
 {
 	opcodeLookup = {
 		&CPU::LOAD,   &CPU::XXX,  &CPU::XXX, &CPU::MISC_MEM, &CPU::OP_IMM, &CPU::AUIPC, &CPU::XXX, &CPU::XXX,
 		&CPU::STORE,  &CPU::XXX,  &CPU::XXX, &CPU::XXX,      &CPU::OP,     &CPU::LUI,   &CPU::XXX, &CPU::XXX,
 		&CPU::XXX,    &CPU::XXX,  &CPU::XXX, &CPU::XXX,      &CPU::XXX,    &CPU::XXX,   &CPU::XXX, &CPU::XXX,
-		&CPU::BRANCH, &CPU::JALR, &CPU::XXX, &CPU::JAL,      &CPU::XXX,    &CPU::XXX,   &CPU::XXX, &CPU::XXX,
+		&CPU::BRANCH, &CPU::JALR, &CPU::XXX, &CPU::JAL,      &CPU::SYSTEM, &CPU::XXX,   &CPU::XXX, &CPU::XXX,
 	};
 
 	reset();
@@ -43,6 +45,9 @@ void CPU::clock()
 
 	(this->*instr.execute)();
 	pc += 4;
+	
+	instret++;
+	cycle++;
 }
 
 void CPU::reset()
@@ -280,6 +285,31 @@ CPU::Instruction CPU::MISC_MEM(uint32_t instr)
 
 	if (i.func3 == 0)
 		return { "fence", ArgumentType::FenceType, &CPU::Fence };
+
+	return { "???", ArgumentType::None, &CPU::Nop };
+}
+
+CPU::Instruction CPU::SYSTEM(uint32_t instr)
+{
+	InstructionType::I i = punnInstruction<InstructionType::I>(instr);
+
+	switch (i.func3)
+	{
+	case 0b001:
+		return { "csrrw", ArgumentType::CSRRegister, &CPU::CsrRW };
+	case 0b010:
+		return { "csrrs", ArgumentType::CSRRegister, &CPU::CsrRS };
+	case 0b011:
+		return { "csrrc", ArgumentType::CSRRegister, &CPU::CsrRC };
+	case 0b101:
+		return { "csrrwi", ArgumentType::CSRImmediate, &CPU::CsrRWI };
+	case 0b110:
+		return { "csrrsi", ArgumentType::CSRImmediate, &CPU::CsrRSI };
+	case 0b111:
+		return { "csrrci", ArgumentType::CSRImmediate, &CPU::CsrRCI };
+	default:
+		break;
+	}
 
 	return { "???", ArgumentType::None, &CPU::Nop };
 }
@@ -579,6 +609,135 @@ void CPU::Fence()
 { // Can be implemented as nop, memory ordering is already strict
 }
 
+// System
+void CPU::CsrRW()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	if (instr.rd != 0)
+	{
+		uint32_t value;
+		if (!csr.read(csrAddr, value))
+			return; // invalid instruction exception
+
+		writeReg(instr.rd, value);
+	}
+
+	if (!csr.write(csrAddr, readReg(instr.rs1)))
+		return; // invalid instruction exception
+}
+
+void CPU::CsrRS()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	// read old value
+	uint32_t value;
+	if (!csr.read(csrAddr, value))
+		return; // invalid instruction exception
+
+	writeReg(instr.rd, value);
+
+
+	if (instr.rs1 != 0)
+	{
+		// write new value
+		uint32_t newValue = value | readReg(instr.rs1);
+
+		if (!csr.write(csrAddr, newValue))
+			return; // invalid instruction exception
+	}
+}
+
+void CPU::CsrRC()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	// read old value
+	uint32_t value;
+	if (!csr.read(csrAddr, value))
+		return; // invalid instruction exception
+
+	writeReg(instr.rd, value);
+
+
+	if (instr.rs1 != 0)
+	{
+		// write new value
+		uint32_t newValue = value & (~readReg(instr.rs1));
+
+		if (!csr.write(csrAddr, newValue))
+			return; // invalid instruction exception
+	}
+}
+
+void CPU::CsrRWI()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	if (instr.rd != 0)
+	{
+		uint32_t value;
+		if (!csr.read(csrAddr, value))
+			return; // invalid instruction exception
+
+		writeReg(instr.rd, value);
+	}
+
+	if (!csr.write(csrAddr, instr.rs1))
+		return; // invalid instruction exception
+}
+
+void CPU::CsrRSI()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	// read old value
+	uint32_t value;
+	if (!csr.read(csrAddr, value))
+		return; // invalid instruction exception
+
+	writeReg(instr.rd, value);
+
+
+	if (instr.rs1 != 0)
+	{
+		// write new value
+		uint32_t newValue = value | instr.rs1;
+
+		if (!csr.write(csrAddr, newValue))
+			return; // invalid instruction exception
+	}
+}
+
+void CPU::CsrRCI()
+{
+	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
+	uint32_t csrAddr = instr.imm;
+
+	// read old value
+	uint32_t value;
+	if (!csr.read(csrAddr, value))
+		return; // invalid instruction exception
+
+	writeReg(instr.rd, value);
+
+
+	if (instr.rs1 != 0)
+	{
+		// write new value
+		uint32_t newValue = value & (~instr.rs1);
+
+		if (!csr.write(csrAddr, newValue))
+			return; // invalid instruction exception
+	}
+}
+
 // Nop
 void CPU::Nop()
 {
@@ -654,6 +813,20 @@ std::string CPU::disassemble(uint32_t instr)
 
 		uint32_t imm = getImm(i);
 		args = ((imm & 0x0F0) >> 4) + ", " + (imm & 0x00F);
+		break;
+	}
+	case CPU::CSRRegister:
+	{
+		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
+
+		args = regName(i.rd) + ", " + this->csr.getName(i.imm) + ", " + regName(i.rs1);
+		break;
+	}
+	case CPU::CSRImmediate:
+	{
+		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
+
+		args = regName(i.rd) + ", " + this->csr.getName(i.imm) + ", " + std::to_string(i.rs1);
 		break;
 	}
 	case CPU::None:

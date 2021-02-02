@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include "Bus.h"
+#include "CSR.h"
 
 namespace InstructionType
 {
@@ -80,6 +81,7 @@ public:
 
 public:
 	Bus* bus;
+	CSR csr;
 
 public:
 	uint32_t pc = 0;
@@ -111,6 +113,8 @@ public:
 		Branch, // eg. 'beq a0, a1, 0x5'
 		Jump, // eg. 'jal ra, 0x5'
 		FenceType, // eg. 'fence 1, 1'
+		CSRRegister, // eg. 'csrrw a0, uscratch, a1'
+		CSRImmediate, // eg. 'csrrwi a0, uscratch, 5'
 		None // eg. 'ecall'
 	};
 
@@ -139,6 +143,7 @@ public:
 	Instruction JALR(uint32_t instr);
 	Instruction JAL(uint32_t instr);
 	Instruction MISC_MEM(uint32_t instr);
+	Instruction SYSTEM(uint32_t instr);
 
 
 	// instruction execute functions
@@ -163,6 +168,8 @@ public:
 	void Jalr();
 	// Fence
 	void Fence();
+	// System
+	void CsrRW(); void CsrRS(); void CsrRC(); void CsrRWI(); void CsrRSI(); void CsrRCI();
 	// Nop
 	void Nop();
 
@@ -182,4 +189,8 @@ public:
 	uint32_t getImm(InstructionType::B instr); // Signed
 	uint32_t getImm(InstructionType::U instr); // Signed
 	uint32_t getImm(InstructionType::J instr); // Signed
+
+public:
+	uint64_t instret = 0; // amount of instructions executed
+	uint64_t cycle = 0; // amount of cycles
 };

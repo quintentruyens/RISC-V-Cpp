@@ -55,7 +55,7 @@ public:
 
 		for (int i = 0; i < 32; i++)
 		{
-			DrawString(x, y + 20 + 10 * i, cpu->regName(i) + ": 0x" + hex(cpu->readReg(i), 8));
+			DrawString(x + 140 * (i % 2), y + 20 + 10 * (i / 2), cpu->regName(i) + ": 0x" + hex(cpu->readReg(i), 8));
 		}
 	}
 
