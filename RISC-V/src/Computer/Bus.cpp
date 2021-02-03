@@ -1,6 +1,6 @@
 #include <cstdint>
 #include "Bus.h"
-#include "CPU.h"
+#include "CPU/CPU.h"
 
 // BUS
 Bus::Bus()

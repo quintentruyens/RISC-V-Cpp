@@ -12,7 +12,7 @@ public:
 	void Draw();
 	void Update();
 
-private:
+public:
 	olc::PixelGameEngine* pge;
 	int x;
 	int y;

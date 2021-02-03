@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include <functional>
-#include "Bus.h"
+#include "../Bus.h"
 #include "CSR.h"
 
 namespace InstructionType

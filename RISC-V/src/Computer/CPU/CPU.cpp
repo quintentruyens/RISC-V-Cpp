@@ -1,6 +1,6 @@
 #include <cstdint>
 #include <iostream>
-#include "MemoryMap.h"
+#include "../MemoryMap.h"
 #include "CPU.h"
 #include "CSR.h"
 

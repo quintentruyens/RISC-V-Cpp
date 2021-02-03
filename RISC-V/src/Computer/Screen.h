@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <array>
 #include "Bus.h"
-#include "olcPixelGameEngine.h"
+#include "../Drawing/olcPixelGameEngine.h"
 
 template <uint32_t START_ADDR, uint32_t ROWS, uint32_t COLUMNS>
 class Screen : public BusDevice
@@ -13,7 +13,7 @@ public:
 		if (START_ADDR % 4 != 0 || COLUMNS > 32) throw "invalid template argument";
 
 		startAddress = START_ADDR;
-		endAddress = START_ADDR + ROWS * 4;
+		endAddress = START_ADDR + ROWS * 4 - 1;
 
 		for (uint32_t& a : memory) a = 0;
 	}

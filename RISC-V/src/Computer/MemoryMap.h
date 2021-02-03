@@ -16,4 +16,5 @@ namespace MemoryMap
 	constexpr uint32_t StackBaseAddr = 0x03FF'FFFC;
 
 	constexpr uint32_t ScreenBaseAddr = 0xF000'0000;
+	constexpr uint32_t TerminalAddr = 0xF000'0080;
 }

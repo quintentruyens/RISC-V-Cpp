@@ -151,22 +151,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Button.cpp" />
-    <ClCompile Include="src\CSR.cpp" />
-    <ClCompile Include="src\CPU.cpp" />
-    <ClCompile Include="src\Bus.cpp" />
+    <ClCompile Include="src\Drawing\Button.cpp" />
+    <ClCompile Include="src\Computer\CPU\CSR.cpp" />
+    <ClCompile Include="src\Computer\CPU\CPU.cpp" />
+    <ClCompile Include="src\Computer\Bus.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Computer\Terminal.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Button.h" />
-    <ClInclude Include="src\Screen.h" />
-    <ClInclude Include="src\CSR.h" />
-    <ClInclude Include="src\CPU.h" />
-    <ClInclude Include="src\MemoryMap.h" />
-    <ClInclude Include="src\ROM.h" />
-    <ClInclude Include="src\Bus.h" />
-    <ClInclude Include="src\olcPixelGameEngine.h" />
-    <ClInclude Include="src\RAM.h" />
+    <ClInclude Include="src\Drawing\Button.h" />
+    <ClInclude Include="src\Computer\Screen.h" />
+    <ClInclude Include="src\Computer\CPU\CSR.h" />
+    <ClInclude Include="src\Computer\CPU\CPU.h" />
+    <ClInclude Include="src\Computer\MemoryMap.h" />
+    <ClInclude Include="src\Computer\ROM.h" />
+    <ClInclude Include="src\Computer\Bus.h" />
+    <ClInclude Include="src\Drawing\olcPixelGameEngine.h" />
+    <ClInclude Include="src\Computer\RAM.h" />
+    <ClInclude Include="src\Drawing\Tabs.h" />
+    <ClInclude Include="src\Computer\Terminal.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

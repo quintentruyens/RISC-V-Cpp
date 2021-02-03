@@ -15,48 +15,57 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Bus.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CPU.cpp">
+    <ClCompile Include="src\Computer\CPU\CPU.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CSR.cpp">
+    <ClCompile Include="src\Computer\CPU\CSR.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Button.cpp">
+    <ClCompile Include="src\Computer\Bus.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Drawing\Button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Computer\Terminal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\RAM.h">
+    <ClInclude Include="src\Computer\CPU\CPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Bus.h">
+    <ClInclude Include="src\Computer\CPU\CSR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\olcPixelGameEngine.h">
+    <ClInclude Include="src\Computer\Bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ROM.h">
+    <ClInclude Include="src\Computer\RAM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\MemoryMap.h">
+    <ClInclude Include="src\Computer\ROM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CPU.h">
+    <ClInclude Include="src\Computer\Screen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CSR.h">
+    <ClInclude Include="src\Computer\MemoryMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Screen.h">
+    <ClInclude Include="src\Drawing\Button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Button.h">
+    <ClInclude Include="src\Drawing\olcPixelGameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Drawing\Tabs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Computer\Terminal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
