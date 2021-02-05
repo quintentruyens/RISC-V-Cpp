@@ -105,43 +105,43 @@ bool CSR::write(uint32_t address, uint32_t value)
 	}
 }
 
-std::string CSR::getName(uint32_t address)
+std::wstring CSR::getName(uint32_t address)
 {
 	switch (address)
 	{
 	case MISA :
-		return "misa";
+		return L"misa";
 
 	case UREG00:
-		return "ureg00";
+		return L"ureg00";
 
 	case CYCLE:
-		return "cycle";
+		return L"cycle";
 	case TIME:
-		return "time";
+		return L"time";
 	case INSTRET:
-		return "instret";
+		return L"instret";
 
 	case CYCLEH:
-		return "cycleh";
+		return L"cycleh";
 	case TIMEH:
-		return "timeh";
+		return L"timeh";
 	case INSTRETH:
-		return "instreth";
+		return L"instreth";
 
 	case MVENDORID:
-		return "mvendorid";
+		return L"mvendorid";
 	case MARCHID:
-		return "marchid";
+		return L"marchid";
 	case MIMPID:
-		return "mimpid";
+		return L"mimpid";
 	case MHARTID:
-		return "mhartid";
+		return L"mhartid";
 
 	case DEBUG:
-		return "debug";
+		return L"debug";
 
 	default:
-		return "???";
+		return L"???";
 	}
 }

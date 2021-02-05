@@ -6,22 +6,22 @@ template <size_t NUMBER>
 class Tabs
 {
 public:
-	Tabs(olc::PixelGameEngine* pge, std::string names[NUMBER])
+	Tabs(olcConsoleGameEngine* cge, short onColour, short offColour, std::wstring names[NUMBER])
 	{
-		int x = 5;
+		int x = 1;
 		for (size_t i = 0; i < NUMBER; i++)
 		{
-			int width = pge->GetTextSize(names[i]).x + 10;
-			buttons[i] = new Button(pge, x, 5, width, 20, olc::VERY_DARK_CYAN, names[i], 
-				[this, i]() mutable {
-					buttons[selectedTabNumber]->bgColor = olc::VERY_DARK_CYAN;
+			int width = names[i].length() + 2;
+			buttons[i] = new Button(cge, x, 0, width, 1, offColour, names[i], 
+				[this, i, onColour, offColour]() mutable {
+					buttons[selectedTabNumber]->colour = offColour;
 					selectedTabNumber = i;
-					buttons[i]->bgColor = olc::DARK_CYAN;
+					buttons[i]->colour = onColour;
 				}
 			);
-			x += width + 2;
+			x += width + 1;
 		}
-		buttons[0]->bgColor = olc::DARK_CYAN;
+		buttons[0]->colour = onColour;
 	}
 
 	~Tabs()

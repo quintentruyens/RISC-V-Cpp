@@ -121,7 +121,7 @@ public:
 
 	struct Instruction
 	{
-		std::string name;
+		std::wstring name;
 		ArgumentType argumentType;
 		void (CPU::* execute)(void) = nullptr;
 	};
@@ -182,9 +182,9 @@ public:
 		return *((T*)&instr);
 	}
 
-	std::string disassemble(uint32_t instr);
-	std::string regName(uint32_t reg);
-	std::string hex(uint32_t n);
+	std::wstring disassemble(uint32_t instr);
+	std::wstring regName(uint32_t reg);
+	std::wstring hex(uint32_t n);
 	uint32_t getImm(InstructionType::I instr); // Signed
 	uint32_t getImm(InstructionType::S instr); // Signed
 	uint32_t getImm(InstructionType::B instr); // Signed

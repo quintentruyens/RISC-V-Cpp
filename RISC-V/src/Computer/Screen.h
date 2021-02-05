@@ -2,15 +2,17 @@
 #include <cstdint>
 #include <array>
 #include "Bus.h"
-#include "../Drawing/olcPixelGameEngine.h"
+#include "../Drawing/olcConsoleGameEngine.h"
 
 template <uint32_t START_ADDR, uint32_t ROWS, uint32_t COLUMNS>
 class Screen : public BusDevice
 {
 public:
-	Screen()
+	// onColour as foreground, offColour as background
+	Screen(short colour)
+		: colour(colour)
 	{
-		if (START_ADDR % 4 != 0 || COLUMNS > 32) throw "invalid template argument";
+		if (START_ADDR % 4 != 0 || COLUMNS > 32 || ROWS % 2 != 0) throw "invalid template argument";
 
 		startAddress = START_ADDR;
 		endAddress = START_ADDR + ROWS * 4 - 1;
@@ -22,19 +24,34 @@ public:
 	}
 
 public:
-	void Draw(int x, int y, int pixelSize, olc::PixelGameEngine* pge)
+	void Draw(int x, int y, olcConsoleGameEngine* cge)
 	{
-		pge->FillRect(x, y, pixelSize * COLUMNS, pixelSize * ROWS, olc::DARK_GREY); // draw background
-
-		for (int row = 0; row < ROWS; row++)
+		for (int row = 0; row < ROWS; row += 2)
 		{
-			uint32_t rowData = memory[row];
+			uint32_t rowData1 = memory[row];
+			uint32_t rowData2 = memory[row + 1];
 			for (int column = 0; column < COLUMNS; column++)
 			{
-				if ((rowData & (1U << column)) != 0)
+				bool state1 = ((rowData1 & (1U << column)) != 0);
+				bool state2 = ((rowData2 & (1U << column)) != 0);
+
+				wchar_t character;
+				if (state1)
 				{
-					pge->FillRect(x + pixelSize * (COLUMNS - column - 1), y + pixelSize * row, pixelSize, pixelSize, olc::GREEN);
+					if (state2)
+						character = L'\u2588';
+					else
+						character = L'\u2580';
 				}
+				else
+				{
+					if (state2)
+						character = L'\u2584';
+					else
+						character = L' ';
+				}
+				
+				cge->Draw(x + (COLUMNS - column) - 1, y + row / 2, character, colour); 
 			}
 		}
 	}
@@ -56,6 +73,7 @@ public:
 
 public:
 	std::array<uint32_t, ROWS> memory;
+	short colour;
 };
 
 

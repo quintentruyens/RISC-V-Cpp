@@ -75,7 +75,7 @@ void CPU::writeReg(uint32_t index, uint32_t data)
 CPU::Instruction CPU::XXX(uint32_t instr)
 {
 	bool illegalInstruction = true;
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::OP_IMM(uint32_t instr)
@@ -85,27 +85,27 @@ CPU::Instruction CPU::OP_IMM(uint32_t instr)
 	switch (i.func3)
 	{
 	case 0b000:
-		return { "addi", ArgumentType::Immediate, &CPU::AddI };
+		return { L"addi", ArgumentType::Immediate, &CPU::AddI };
 	case 0b010:
-		return { "slti", ArgumentType::Immediate, &CPU::SltI };
+		return { L"slti", ArgumentType::Immediate, &CPU::SltI };
 	case 0b011:
-		return { "sltiu", ArgumentType::Immediate, &CPU::SltIU };
+		return { L"sltiu", ArgumentType::Immediate, &CPU::SltIU };
 	case 0b100:
-		return { "xori", ArgumentType::Immediate, &CPU::XorI };
+		return { L"xori", ArgumentType::Immediate, &CPU::XorI };
 	case 0b110:
-		return { "ori", ArgumentType::Immediate, &CPU::OrI };
+		return { L"ori", ArgumentType::Immediate, &CPU::OrI };
 	case 0b111:
-		return { "andi", ArgumentType::Immediate, &CPU::AndI };
+		return { L"andi", ArgumentType::Immediate, &CPU::AndI };
 	case 0b001:
 		if (i.imm & 0xFFE0) break;
-		return { "slli", ArgumentType::Immediate, &CPU::SllI };
+		return { L"slli", ArgumentType::Immediate, &CPU::SllI };
 	case 0b101:
 		switch ((i.imm & 0xFFE0) >> 5)
 		{
 		case 0:
-			return { "srli", ArgumentType::Immediate, &CPU::SrlI };
+			return { L"srli", ArgumentType::Immediate, &CPU::SrlI };
 		case 32:
-			return { "srai", ArgumentType::Immediate, &CPU::SraI };
+			return { L"srai", ArgumentType::Immediate, &CPU::SraI };
 		default:
 			break;
 		}
@@ -114,7 +114,7 @@ CPU::Instruction CPU::OP_IMM(uint32_t instr)
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::OP(uint32_t instr)
@@ -127,21 +127,21 @@ CPU::Instruction CPU::OP(uint32_t instr)
 		switch (i.func3)
 		{
 		case 0b000:
-			return { "add", ArgumentType::Register, &CPU::Add };
+			return { L"add", ArgumentType::Register, &CPU::Add };
 		case 0b001:
-			return { "sll", ArgumentType::Register, &CPU::Sll };
+			return { L"sll", ArgumentType::Register, &CPU::Sll };
 		case 0b010:
-			return { "slt", ArgumentType::Register, &CPU::Slt };
+			return { L"slt", ArgumentType::Register, &CPU::Slt };
 		case 0b011:
-			return { "sltu", ArgumentType::Register, &CPU::SltU };
+			return { L"sltu", ArgumentType::Register, &CPU::SltU };
 		case 0b100:
-			return { "xor", ArgumentType::Register, &CPU::Xor };
+			return { L"xor", ArgumentType::Register, &CPU::Xor };
 		case 0b101:
-			return { "srl", ArgumentType::Register, &CPU::Srl };
+			return { L"srl", ArgumentType::Register, &CPU::Srl };
 		case 0b110:
-			return { "or", ArgumentType::Register, &CPU::Or };
+			return { L"or", ArgumentType::Register, &CPU::Or };
 		case 0b111:
-			return { "and", ArgumentType::Register, &CPU::And };
+			return { L"and", ArgumentType::Register, &CPU::And };
 		default:
 			break;
 		}
@@ -150,9 +150,9 @@ CPU::Instruction CPU::OP(uint32_t instr)
 		switch (i.func3)
 		{
 		case 0b000:
-			return { "sub", ArgumentType::Register, &CPU::Sub };
+			return { L"sub", ArgumentType::Register, &CPU::Sub };
 		case 0b101:
-			return { "sra", ArgumentType::Register, &CPU::Sra };
+			return { L"sra", ArgumentType::Register, &CPU::Sra };
 		default:
 			break;
 		}
@@ -161,21 +161,21 @@ CPU::Instruction CPU::OP(uint32_t instr)
 		switch (i.func3)
 		{
 		case 0b000:
-			return { "mul", ArgumentType::Register, &CPU::Mul };
+			return { L"mul", ArgumentType::Register, &CPU::Mul };
 		case 0b001:
-			return { "mulh", ArgumentType::Register, &CPU::MulH };
+			return { L"mulh", ArgumentType::Register, &CPU::MulH };
 		case 0b010:
-			return { "mulhsu", ArgumentType::Register, &CPU::MulHSU };
+			return { L"mulhsu", ArgumentType::Register, &CPU::MulHSU };
 		case 0b011:
-			return { "mulhu", ArgumentType::Register, &CPU::MulHU };
+			return { L"mulhu", ArgumentType::Register, &CPU::MulHU };
 		case 0b100:
-			return { "div", ArgumentType::Register, &CPU::Div };
+			return { L"div", ArgumentType::Register, &CPU::Div };
 		case 0b101:
-			return { "divu", ArgumentType::Register, &CPU::DivU };
+			return { L"divu", ArgumentType::Register, &CPU::DivU };
 		case 0b110:
-			return { "rem", ArgumentType::Register, &CPU::Rem };
+			return { L"rem", ArgumentType::Register, &CPU::Rem };
 		case 0b111:
-			return { "remu", ArgumentType::Register, &CPU::RemU };
+			return { L"remu", ArgumentType::Register, &CPU::RemU };
 		default:
 			break;
 		}
@@ -184,7 +184,7 @@ CPU::Instruction CPU::OP(uint32_t instr)
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::LOAD(uint32_t instr)
@@ -194,20 +194,20 @@ CPU::Instruction CPU::LOAD(uint32_t instr)
 	switch (i.func3)
 	{
 	case 0b000:
-		return { "lb", ArgumentType::LoadType, &CPU::Lb };
+		return { L"lb", ArgumentType::LoadType, &CPU::Lb };
 	case 0b001:
-		return { "lh", ArgumentType::LoadType, &CPU::Lh };
+		return { L"lh", ArgumentType::LoadType, &CPU::Lh };
 	case 0b010:
-		return { "lw", ArgumentType::LoadType, &CPU::Lw };
+		return { L"lw", ArgumentType::LoadType, &CPU::Lw };
 	case 0b100:
-		return { "lbu", ArgumentType::LoadType, &CPU::LbU };
+		return { L"lbu", ArgumentType::LoadType, &CPU::LbU };
 	case 0b101:
-		return { "lhu", ArgumentType::LoadType, &CPU::LhU };
+		return { L"lhu", ArgumentType::LoadType, &CPU::LhU };
 	default:
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::STORE(uint32_t instr)
@@ -217,26 +217,26 @@ CPU::Instruction CPU::STORE(uint32_t instr)
 	switch (i.func3)
 	{
 	case 0b000:
-		return { "sb", ArgumentType::StoreType, &CPU::Sb };
+		return { L"sb", ArgumentType::StoreType, &CPU::Sb };
 	case 0b001:
-		return { "sh", ArgumentType::StoreType, &CPU::Sh };
+		return { L"sh", ArgumentType::StoreType, &CPU::Sh };
 	case 0b010:
-		return { "sw", ArgumentType::StoreType, &CPU::Sw };
+		return { L"sw", ArgumentType::StoreType, &CPU::Sw };
 	default:
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::LUI(uint32_t instr)
 {
-	return { "lui", ArgumentType::Upper, &CPU::Lui };
+	return { L"lui", ArgumentType::Upper, &CPU::Lui };
 }
 
 CPU::Instruction CPU::AUIPC(uint32_t instr)
 {
-	return { "auipc", ArgumentType::Upper, &CPU::Auipc };
+	return { L"auipc", ArgumentType::Upper, &CPU::Auipc };
 }
 
 CPU::Instruction CPU::BRANCH(uint32_t instr)
@@ -246,27 +246,27 @@ CPU::Instruction CPU::BRANCH(uint32_t instr)
 	switch (i.func3)
 	{
 	case 0b000:
-		return { "beq", ArgumentType::Branch, &CPU::Beq };
+		return { L"beq", ArgumentType::Branch, &CPU::Beq };
 	case 0b001:
-		return { "bne", ArgumentType::Branch, &CPU::Bne };
+		return { L"bne", ArgumentType::Branch, &CPU::Bne };
 	case 0b100:
-		return { "blt", ArgumentType::Branch, &CPU::Blt };
+		return { L"blt", ArgumentType::Branch, &CPU::Blt };
 	case 0b101:
-		return { "bge", ArgumentType::Branch, &CPU::Bge };
+		return { L"bge", ArgumentType::Branch, &CPU::Bge };
 	case 0b110:
-		return { "bltu", ArgumentType::Branch, &CPU::BltU };
+		return { L"bltu", ArgumentType::Branch, &CPU::BltU };
 	case 0b111:
-		return { "bgeu", ArgumentType::Branch, &CPU::BgeU };
+		return { L"bgeu", ArgumentType::Branch, &CPU::BgeU };
 	default:
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::JAL(uint32_t instr)
 {
-	return { "jal", ArgumentType::Jump, &CPU::Jal };
+	return { L"jal", ArgumentType::Jump, &CPU::Jal };
 }
 
 CPU::Instruction CPU::JALR(uint32_t instr)
@@ -274,9 +274,9 @@ CPU::Instruction CPU::JALR(uint32_t instr)
 	InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
 	if (i.func3 == 0)
-		return { "jalr", ArgumentType::Immediate, &CPU::Jalr };
+		return { L"jalr", ArgumentType::Immediate, &CPU::Jalr };
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::MISC_MEM(uint32_t instr)
@@ -284,9 +284,9 @@ CPU::Instruction CPU::MISC_MEM(uint32_t instr)
 	InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
 	if (i.func3 == 0)
-		return { "fence", ArgumentType::FenceType, &CPU::Fence };
+		return { L"fence", ArgumentType::FenceType, &CPU::Fence };
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::SYSTEM(uint32_t instr)
@@ -296,22 +296,22 @@ CPU::Instruction CPU::SYSTEM(uint32_t instr)
 	switch (i.func3)
 	{
 	case 0b001:
-		return { "csrrw", ArgumentType::CSRRegister, &CPU::CsrRW };
+		return { L"csrrw", ArgumentType::CSRRegister, &CPU::CsrRW };
 	case 0b010:
-		return { "csrrs", ArgumentType::CSRRegister, &CPU::CsrRS };
+		return { L"csrrs", ArgumentType::CSRRegister, &CPU::CsrRS };
 	case 0b011:
-		return { "csrrc", ArgumentType::CSRRegister, &CPU::CsrRC };
+		return { L"csrrc", ArgumentType::CSRRegister, &CPU::CsrRC };
 	case 0b101:
-		return { "csrrwi", ArgumentType::CSRImmediate, &CPU::CsrRWI };
+		return { L"csrrwi", ArgumentType::CSRImmediate, &CPU::CsrRWI };
 	case 0b110:
-		return { "csrrsi", ArgumentType::CSRImmediate, &CPU::CsrRSI };
+		return { L"csrrsi", ArgumentType::CSRImmediate, &CPU::CsrRSI };
 	case 0b111:
-		return { "csrrci", ArgumentType::CSRImmediate, &CPU::CsrRCI };
+		return { L"csrrci", ArgumentType::CSRImmediate, &CPU::CsrRCI };
 	default:
 		break;
 	}
 
-	return { "???", ArgumentType::None, &CPU::Nop };
+	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 // Instructions
@@ -744,67 +744,67 @@ void CPU::Nop()
 }
 
 // Disassembly
-std::string CPU::disassemble(uint32_t instr)
+std::wstring CPU::disassemble(uint32_t instr)
 {
 	uint32_t opcode = ((InstructionType::B*)&instr)->opcode;
 
 	if ((opcode & 0b11) != 0b11)
-		return "???";
+		return L"???";
 
 	InstructionDecoder decoder = opcodeLookup[opcode >> 2];
 	Instruction decodedInstr = (this->*decoder)(instr);
 
-	std::string name = decodedInstr.name;
-	std::string args;
+	std::wstring name = decodedInstr.name;
+	std::wstring args;
 	switch (decodedInstr.argumentType)
 	{
 	case CPU::Immediate:
 	{
 		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
-		args = regName(i.rd) + ", " + regName(i.rs1) + ", " + hex(getImm(i));
+		args = regName(i.rd) + L", " + regName(i.rs1) + L", " + hex(getImm(i));
 		break;
 	}
 	case CPU::Register:
 	{
 		InstructionType::R i = punnInstruction<InstructionType::R>(instr);
 
-		args = regName(i.rd) + ", " + regName(i.rs1) + ", " + regName(i.rs2);
+		args = regName(i.rd) + L", " + regName(i.rs1) + L", " + regName(i.rs2);
 		break;
 	}
 	case CPU::LoadType:
 	{
 		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
-		args = regName(i.rd) + ", " + hex(getImm(i)) + "(" + regName(i.rs1) + ")";
+		args = regName(i.rd) + L", " + hex(getImm(i)) + L"(" + regName(i.rs1) + L")";
 		break;
 	}
 	case CPU::StoreType:
 	{
 		InstructionType::S i = punnInstruction<InstructionType::S>(instr);
 
-		args = regName(i.rs2) + ", " + hex(getImm(i)) + "(" + regName(i.rs1) + ")";
+		args = regName(i.rs2) + L", " + hex(getImm(i)) + L"(" + regName(i.rs1) + L")";
 		break;
 	}
 	case CPU::Upper:
 	{
 		InstructionType::U i = punnInstruction<InstructionType::U>(instr);
 		
-		args = regName(i.rd) + ", " + hex(getImm(i));
+		args = regName(i.rd) + L", " + hex(getImm(i));
 		break;
 	}
 	case CPU::Branch:
 	{
 		InstructionType::B i = punnInstruction<InstructionType::B>(instr);
 
-		args = regName(i.rs1) + ", " + regName(i.rs2) + ", " + hex(getImm(i));
+		args = regName(i.rs1) + L", " + regName(i.rs2) + L", " + hex(getImm(i));
 		break;
 	}
 	case CPU::Jump:
 	{
 		InstructionType::J i = punnInstruction<InstructionType::J>(instr);
 
-		args = regName(i.rd) + ", " + hex(getImm(i));
+		args = regName(i.rd) + L", " + hex(getImm(i));
 		break;
 	}
 	case CPU::FenceType:
@@ -812,48 +812,48 @@ std::string CPU::disassemble(uint32_t instr)
 		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
 		uint32_t imm = getImm(i);
-		args = ((imm & 0x0F0) >> 4) + ", " + (imm & 0x00F);
+		args = ((imm & 0x0F0) >> 4) + L", " + (imm & 0x00F);
 		break;
 	}
 	case CPU::CSRRegister:
 	{
 		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
-		args = regName(i.rd) + ", " + this->csr.getName(i.imm) + ", " + regName(i.rs1);
+		args = regName(i.rd) + L", " + this->csr.getName(i.imm) + L", " + regName(i.rs1);
 		break;
 	}
 	case CPU::CSRImmediate:
 	{
 		InstructionType::I i = punnInstruction<InstructionType::I>(instr);
 
-		args = regName(i.rd) + ", " + this->csr.getName(i.imm) + ", " + std::to_string(i.rs1);
+		args = regName(i.rd) + L", " + this->csr.getName(i.imm) + L", " + std::to_wstring(i.rs1);
 		break;
 	}
 	case CPU::None:
-		args = "";
+		args = L"";
 		break;
 	default:
 		break;
 	}
 
-	return name + " " + args;
+	return name + L" " + args;
 }
 
-std::string CPU::regName(uint32_t reg)
+std::wstring CPU::regName(uint32_t reg)
 {
-	static const std::array<std::string, 32> names = {
-		"zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0",  "a1",  "a2", "a3", "a4", "a5", 
-		"a6",   "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"
+	static const std::array<std::wstring, 32> names = {
+		L"zero", L"ra", L"sp", L"gp", L"tp", L"t0", L"t1", L"t2", L"s0", L"s1", L"a0",  L"a1",  L"a2", L"a3", L"a4", L"a5", 
+		L"a6",   L"a7", L"s2", L"s3", L"s4", L"s5", L"s6", L"s7", L"s8", L"s9", L"s10", L"s11", L"t3", L"t4", L"t5", L"t6"
 	};
 
 	return names[reg];
 }
 
-std::string CPU::hex(uint32_t n)
+std::wstring CPU::hex(uint32_t n)
 {
-	std::string s("0x\0\0\0\0\0\0\0", 10);
+	std::wstring s(L"0x\0\0\0\0\0\0\0", 10);
 	for (int i = 9; i >= 2; i--, n >>= 4)
-		s[i] = "0123456789abcdef"[n & 0xF];
+		s[i] = L"0123456789abcdef"[n & 0xF];
 	return s;
 };
 

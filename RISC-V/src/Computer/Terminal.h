@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <array>
 #include "Bus.h"
-#include "../Drawing/olcPixelGameEngine.h"
+#include "../Drawing/olcConsoleGameEngine.h"
 
 template <uint32_t ADDR, size_t ROWS, size_t COLUMNS>
 class Terminal : public BusDevice
@@ -24,13 +24,12 @@ public:
 	}
 
 public:
-	void Draw(int x, int y, int textScale, olc::PixelGameEngine* pge)
+	void Draw(int x, int y, short colour, olcConsoleGameEngine* cge)
 	{
-		olc::vi2d textSize = pge->GetTextSize(std::string(COLUMNS, 'W')) * textScale;
-		pge->FillRect(x, y, textSize.x + 10, (ROWS - 1) * 10 * textScale + textSize.y + 10, olc::DARK_GREY);
+		cge->Fill(x, y, x + COLUMNS, y + ROWS, L' ', colour);
 		for (int row = 0; row < ROWS; row++)
 		{
-			pge->DrawString(5 + x, 5 + y + row * 10 * textScale, rows[row], olc::BLACK, textScale);
+			cge->DrawString(x, y + row, rows[row], colour);
 		}
 	}
 
@@ -40,7 +39,7 @@ public:
 		// This ignores dataSize and doesn't cause address misaligned exceptions
 		if (addr != ADDR) return;
 
-		char character = (char)data;
+		wchar_t character = (wchar_t)data;
 		if (character == 10 || character == 13) // Newline
 		{
 			newLine();
@@ -52,16 +51,16 @@ public:
 			return;
 		}
 
-		std::string& rowString = rows[currentRow];
+		std::wstring& rowString = rows[currentRow];
 
 		if (character == 8) // Backspace
 		{
 			rowString.pop_back();
 			return;
 		}
-		if (32 <= character && character < 127)
+		if ((32 <= character && character < 127) || character > 160)
 		{
-			rowString.push_back((char)data);
+			rowString.push_back((wchar_t)data);
 
 			if (rowString.length() == COLUMNS)
 				newLine();
@@ -90,12 +89,12 @@ private:
 
 	void clear()
 	{
-		for (std::string& row : rows)
+		for (std::wstring& row : rows)
 			row.clear();
 	}
 
 private:
-	std::array<std::string, ROWS> rows;
-	uint32_t currentRow;
+	std::array<std::wstring, ROWS> rows;
+	uint32_t currentRow = 0;
 };
 

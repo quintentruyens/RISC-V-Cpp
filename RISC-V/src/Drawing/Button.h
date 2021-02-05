@@ -1,11 +1,11 @@
 #pragma once
 #include <functional>
-#include "olcPixelGameEngine.h"
+#include "olcConsoleGameEngine.h"
 
 class Button
 {
 public:
-	Button(olc::PixelGameEngine* pge, int x, int y, int w, int h, olc::Pixel bgColor, std::string text, const std::function<void()>& onClick);
+	Button(olcConsoleGameEngine* cge, int x, int y, int w, int h, short colour, std::wstring text, const std::function<void()>& onClick);
 	~Button();
 
 public:
@@ -13,13 +13,13 @@ public:
 	void Update();
 
 public:
-	olc::PixelGameEngine* pge;
+	olcConsoleGameEngine* cge;
 	int x;
 	int y;
 	int w;
 	int h;
-	olc::Pixel bgColor;
-	std::string text;
+	short colour;
+	std::wstring text;
 	std::function<void()> onClick;
 };
 

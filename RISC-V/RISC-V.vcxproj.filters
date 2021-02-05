@@ -59,13 +59,13 @@
     <ClInclude Include="src\Drawing\Button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Drawing\olcPixelGameEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Drawing\Tabs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Computer\Terminal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Drawing\olcConsoleGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
