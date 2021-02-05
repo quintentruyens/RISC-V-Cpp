@@ -10,10 +10,10 @@ class Terminal : public BusDevice
 public:
 	Terminal()
 	{
-		if (ADDR % 4 != 0 || ROWS == 0 || COLUMNS == 0) throw "invalid template argument";
+		if (ROWS == 0 || COLUMNS == 0) throw "invalid template argument";
 
 		startAddress = ADDR;
-		endAddress = ADDR + 3;
+		endAddress = ADDR;
 
 		for (size_t i = 0; i < ROWS; i++)
 			rows[i].reserve(COLUMNS);
@@ -55,15 +55,16 @@ public:
 
 		if (character == 8) // Backspace
 		{
-			rowString.pop_back();
+			if (rowString.length() > 0)
+				rowString.pop_back();
 			return;
 		}
 		if ((32 <= character && character < 127) || character > 160)
 		{
-			rowString.push_back((wchar_t)data);
-
 			if (rowString.length() == COLUMNS)
 				newLine();
+
+			rows[currentRow].push_back((wchar_t)data);
 		}
 	}
 
@@ -91,6 +92,7 @@ private:
 	{
 		for (std::wstring& row : rows)
 			row.clear();
+		currentRow = 0;
 	}
 
 private:

@@ -17,4 +17,5 @@ namespace MemoryMap
 
 	constexpr uint32_t ScreenBaseAddr = 0xF000'0000;
 	constexpr uint32_t TerminalAddr = 0xF000'0080;
+	constexpr uint32_t KeyboardAddr = 0xF000'0081;
 }

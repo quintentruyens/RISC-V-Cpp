@@ -9,6 +9,7 @@
 #include "Computer/ROM.h"
 #include "Computer/Screen.h"
 #include "Computer/Terminal.h"
+#include "Computer/Keyboard.h"
 #include "Computer/CPU/CPU.h"
 #include "Computer/MemoryMap.h"
 #include "Drawing/Button.h"
@@ -28,6 +29,7 @@ public:
 	ROM<MemoryMap::Text.BaseAddr, MemoryMap::Text.LimitAddr>* rom;
 	Screen<MemoryMap::ScreenBaseAddr, 32, 32>* screen;
 	Terminal<MemoryMap::TerminalAddr, 16, 40>* terminal;
+	Keyboard* keyboard;
 	CPU* cpu;
 
 private:
@@ -116,6 +118,9 @@ public:
 		terminal = new Terminal<MemoryMap::TerminalAddr, 16, 40>();
 		bus.connectDevice(terminal);
 
+		keyboard = new Keyboard(MemoryMap::KeyboardAddr);
+		bus.connectDevice(keyboard);
+
 		cpu = new CPU([this]() mutable { running = false; playButton->colour = FG_WHITE | BG_CYAN; });
 		cpu->connectBus(&bus);
 
@@ -138,6 +143,7 @@ public:
 	{
 		tabs->Update();
 		UpdateButtons();
+		keyboard->Update(this, fElapsedTime);
 
 		if (running)
 		{

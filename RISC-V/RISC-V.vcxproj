@@ -151,14 +151,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Computer\Keyboard.cpp" />
     <ClCompile Include="src\Drawing\Button.cpp" />
     <ClCompile Include="src\Computer\CPU\CSR.cpp" />
     <ClCompile Include="src\Computer\CPU\CPU.cpp" />
     <ClCompile Include="src\Computer\Bus.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Computer\Terminal.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Computer\Keyboard.h" />
     <ClInclude Include="src\Drawing\Button.h" />
     <ClInclude Include="src\Computer\Screen.h" />
     <ClInclude Include="src\Computer\CPU\CSR.h" />
