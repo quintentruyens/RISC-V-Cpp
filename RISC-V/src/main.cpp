@@ -33,7 +33,7 @@ public:
 	CPU* cpu;
 
 private:
-	Tabs<2>* tabs = nullptr;
+	Tabs<3>* tabs = nullptr;
 	Button* playButton = nullptr;
 	Button* stepButton = nullptr;
 	Button* increaseCpsButton = nullptr;
@@ -57,7 +57,7 @@ public:
 	{
 		for (int row = 0; row < rows; row++)
 		{
-			std::wstring sOffset = L"$" + hex(addr, 8) + L":";
+			std::wstring sOffset = L"0x" + hex(addr, 8) + L":";
 			for (int col = 0; col < columns; col++)
 			{
 				sOffset += L" " + hex(bus.read(addr, true), 8);
@@ -76,6 +76,20 @@ public:
 		{
 			std::wstring name = cpu->regName(i);
 			DrawString(x + 17 * (i % 2), y + 2 + (i / 2), name + L":" + std::wstring(4 - name.length(), ' ') + L"0x" + hex(cpu->readReg(i), 8), FG_WHITE | BG_DARK_BLUE);
+		}
+	}
+
+	void DrawCSR(int x, int y)
+	{
+		CSR csr = cpu->csr;
+		for (int i = 0; i < csr.validAdresses.size(); i++)
+		{
+			uint32_t addr = csr.validAdresses[i];
+			std::wstring name = csr.getName(addr);
+			uint32_t val;
+			csr.read(addr, val, true);
+
+			DrawString(x, y + i, name + L":" + std::wstring(10 - name.length(), ' ') + hex(val, 8), FG_WHITE | BG_DARK_BLUE);
 		}
 	}
 	
@@ -125,8 +139,8 @@ public:
 		cpu->connectBus(&bus);
 
 		// create interface
-		std::wstring tabNames[] = { std::wstring(L"Memory"), std::wstring(L"Terminal")};
-		tabs = new Tabs<2>(this, FG_WHITE | BG_CYAN, FG_WHITE | BG_DARK_CYAN, tabNames);
+		std::wstring tabNames[] = { std::wstring(L"Memory"), std::wstring(L"Terminal"), std::wstring(L"CSR") };
+		tabs = new Tabs<3>(this, FG_WHITE | BG_CYAN, FG_WHITE | BG_DARK_CYAN, tabNames);
 		playButton = new Button(this, 83, 3, 6, 3, FG_WHITE | BG_CYAN, L"play",
 			[this]() mutable { 
 				running = !running; 
@@ -159,14 +173,20 @@ public:
 		Fill(0, 0, m_nScreenWidth, m_nScreenHeight, ' ', BG_DARK_BLUE);
 
 		tabs->Draw();
-		if (tabs->selectedTabNumber == 0)
+		switch (tabs->selectedTabNumber)
 		{
+		case 0: // Memory
 			DrawMemory(1, 2, MemoryMap::Text.BaseAddr, 16, 4);
 			DrawMemory(1, 20, MemoryMap::Data.BaseAddr, 16, 4);
-		}
-		else
-		{
+			break;
+		case 1: // Terminal
 			terminal->Draw(1, 2, FG_BLACK | BG_GREY, this);
+			break;
+		case 2: // CSR
+			DrawCSR(1, 2);
+			break;
+		default:
+			break;
 		}
 		
 		DrawCpu(50, 1);

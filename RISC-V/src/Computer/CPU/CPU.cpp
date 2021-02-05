@@ -618,7 +618,7 @@ void CPU::CsrRW()
 	if (instr.rd != 0)
 	{
 		uint32_t value;
-		if (!csr.read(csrAddr, value))
+		if (!csr.read(csrAddr, value, false))
 			return; // invalid instruction exception
 
 		writeReg(instr.rd, value);
@@ -635,7 +635,7 @@ void CPU::CsrRS()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value))
+	if (!csr.read(csrAddr, value, false))
 		return; // invalid instruction exception
 
 	writeReg(instr.rd, value);
@@ -658,7 +658,7 @@ void CPU::CsrRC()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value))
+	if (!csr.read(csrAddr, value, false))
 		return; // invalid instruction exception
 
 	writeReg(instr.rd, value);
@@ -682,7 +682,7 @@ void CPU::CsrRWI()
 	if (instr.rd != 0)
 	{
 		uint32_t value;
-		if (!csr.read(csrAddr, value))
+		if (!csr.read(csrAddr, value, false))
 			return; // invalid instruction exception
 
 		writeReg(instr.rd, value);
@@ -699,7 +699,7 @@ void CPU::CsrRSI()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value))
+	if (!csr.read(csrAddr, value, false))
 		return; // invalid instruction exception
 
 	writeReg(instr.rd, value);
@@ -722,7 +722,7 @@ void CPU::CsrRCI()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value))
+	if (!csr.read(csrAddr, value, false))
 		return; // invalid instruction exception
 
 	writeReg(instr.rd, value);

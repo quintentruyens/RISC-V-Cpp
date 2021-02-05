@@ -25,13 +25,14 @@ constexpr uint32_t DEBUG = 0xFC0;
 CSR::CSR(CPU* cpu, const std::function<void()>& startDebug)
 	: cpu(cpu), startDebug(startDebug)
 {
+	validAdresses = { MISA, UREG00, CYCLE, TIME, INSTRET, CYCLEH, TIMEH, INSTRETH, MVENDORID, MARCHID, MIMPID, MHARTID, DEBUG };
 }
 
 CSR::~CSR()
 {
 }
 
-bool CSR::read(uint32_t address, uint32_t& value)
+bool CSR::read(uint32_t address, uint32_t& value, bool bReadOnly)
 {
 	switch (address)
 	{
@@ -80,7 +81,8 @@ bool CSR::read(uint32_t address, uint32_t& value)
 
 	case DEBUG:
 		value = 0;
-		startDebug();
+		if (!bReadOnly)
+			startDebug();
 		return true;
 
 	default:
