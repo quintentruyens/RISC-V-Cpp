@@ -12,9 +12,6 @@ public:
 	{
 		if (ROWS == 0 || COLUMNS == 0) throw "invalid template argument";
 
-		startAddress = ADDR;
-		endAddress = ADDR;
-
 		for (size_t i = 0; i < ROWS; i++)
 			rows[i].reserve(COLUMNS);
 	}
@@ -34,21 +31,21 @@ public:
 	}
 
 public:
-	void write(uint32_t addr, uint32_t data, DataSize dataSize)
+	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override
 	{
-		// This ignores dataSize and doesn't cause address misaligned exceptions
-		if (addr != ADDR) return;
+		if (addr != ADDR) return NotInRange;
+		// Misaligned is no longer possible, if addr == ADDR, it is a multiple of 4 and always aligned
 
 		wchar_t character = (wchar_t)data;
 		if (character == 10 || character == 13) // Newline
 		{
 			newLine();
-			return;
+			return Success;
 		}
 		if (character == 12) // Clear screen
 		{
 			clear();
-			return;
+			return Success;
 		}
 
 		std::wstring& rowString = rows[currentRow];
@@ -57,7 +54,7 @@ public:
 		{
 			if (rowString.length() > 0)
 				rowString.pop_back();
-			return;
+			return Success;
 		}
 		if ((32 <= character && character < 127) || character > 160)
 		{
@@ -65,12 +62,13 @@ public:
 				newLine();
 
 			rows[currentRow].push_back((wchar_t)data);
+			return Success;
 		}
 	}
 
-	uint32_t read(uint32_t addr, bool bReadOnly, DataSize dataSize, bool isSigned)
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override
 	{
-		return 0;
+		return NotInRange;
 	}
 
 private:

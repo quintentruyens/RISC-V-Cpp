@@ -6,7 +6,6 @@
 #include <fstream>
 #include "Computer/Bus.h"
 #include "Computer/RAM.h"
-#include "Computer/ROM.h"
 #include "Computer/Screen.h"
 #include "Computer/Terminal.h"
 #include "Computer/Keyboard.h"
@@ -25,8 +24,7 @@ public:
 
 public:
 	Bus bus;
-	RAM<MemoryMap::Data.BaseAddr, MemoryMap::Data.LimitAddr>* ram;
-	ROM<MemoryMap::Text.BaseAddr, MemoryMap::Text.LimitAddr>* rom;
+	RAM<MemoryMap::RAM.BaseAddr, MemoryMap::RAM.LimitAddr>* ram;
 	Screen<MemoryMap::ScreenBaseAddr, 32, 32>* screen;
 	Terminal<MemoryMap::TerminalAddr, 16, 40>* terminal;
 	Keyboard* keyboard;
@@ -60,7 +58,9 @@ public:
 			std::wstring sOffset = L"0x" + hex(addr, 8) + L":";
 			for (int col = 0; col < columns; col++)
 			{
-				sOffset += L" " + hex(bus.read(addr, true), 8);
+				uint32_t data;
+				MemAccessResult accessResult = bus.read(addr, data, true);
+				sOffset += L" " + (accessResult == Success ? hex(data, 8) : L"????????");
 				addr += 4;
 			}
 			DrawString(x, y + row, sOffset, FG_WHITE | BG_DARK_BLUE);
@@ -69,7 +69,9 @@ public:
 
 	void DrawCpu(int x, int y)
 	{
-		DrawString(x, y, L"Instr: " + cpu->disassemble(bus.read(cpu->pc, true)), FG_WHITE | BG_DARK_BLUE);
+		uint32_t instr;
+		MemAccessResult accessResult = bus.read(cpu->pc, instr, true);
+		DrawString(x, y, L"Instr: " + (accessResult == Success ? cpu->disassemble(instr) : L"Error"), FG_WHITE | BG_DARK_BLUE);
 		DrawString(x, y + 1, L"PC: 0x" + hex(cpu->pc, 8), FG_WHITE | BG_DARK_BLUE);
 
 		for (int i = 0; i < 32; i++)
@@ -118,13 +120,10 @@ public:
 	bool OnUserCreate() override
 	{
 		// Build computer
-		ram = new RAM<MemoryMap::Data.BaseAddr, MemoryMap::Data.LimitAddr>();
+		ram = new RAM<MemoryMap::RAM.BaseAddr, MemoryMap::RAM.LimitAddr>();
 		ram->fillFromFile("data.bin", MemoryMap::Data.BaseAddr);
+		ram->fillFromFile("text.bin", MemoryMap::Text.BaseAddr);
 		bus.connectDevice(ram);
-
-		rom = new ROM<MemoryMap::Text.BaseAddr, MemoryMap::Text.LimitAddr>();
-		rom->fillFromFile("text.bin", MemoryMap::Text.BaseAddr);
-		bus.connectDevice(rom);
 
 		screen = new Screen<MemoryMap::ScreenBaseAddr, 32, 32>(FG_GREEN | BG_DARK_GREY);
 		bus.connectDevice(screen);

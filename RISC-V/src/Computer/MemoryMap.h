@@ -9,6 +9,8 @@ namespace MemoryMap
 		const uint32_t LimitAddr;
 	};
 
+	constexpr Range RAM  = { 0x0000'0000, 0x03FF'FFFFU };
+
 	constexpr Range Text = { 0x0040'0000, 0x00FF'FFFFU };
 	constexpr Range Data = { 0x0101'0000, 0x0103'FFFFU };
 

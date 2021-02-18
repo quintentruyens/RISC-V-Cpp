@@ -6,6 +6,10 @@ enum DataSize {
 	Word = 0, HalfWord, Byte
 };
 
+enum MemAccessResult {
+	Success = 0, NotInRange, Misaligned
+};
+
 class CPU;
 class BusDevice;
 
@@ -20,8 +24,8 @@ public:
 	void connectCPU(CPU* cpu);
 
 public:
-	void write(uint32_t addr, uint32_t data, DataSize dataSize = Word);
-	uint32_t read(uint32_t add, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true);
+	MemAccessResult write(uint32_t addr, uint32_t data, enum DataSize dataSize = Word);
+	MemAccessResult read(uint32_t add, uint32_t& result, bool bReadOnly = false, enum DataSize dataSize = Word, bool isSigned = true);
 
 private:
 	std::vector<BusDevice*> devices;
@@ -35,17 +39,13 @@ public:
 	virtual ~BusDevice();
 
 public:
-	virtual void write(uint32_t addr, uint32_t data, DataSize dataSize = Word) = 0;
-	virtual uint32_t read(uint32_t addr, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) = 0;
+	virtual MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) = 0;
+	// Should not write result unless the read succeeded
+	virtual MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) = 0;
 
 	void connect(Bus* bus);
 
-	bool hasAddress(uint32_t addr);
-
 public:
 	Bus* bus;
-
-	uint32_t startAddress = 0;
-	uint32_t endAddress = 0;
 };
 

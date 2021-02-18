@@ -11,9 +11,6 @@ public:
 	{
 		if (START_ADDR % 4 != 0 || END_ADDR % 4 != 3) throw "Invalid adress";
 
-		startAddress = START_ADDR;
-		endAddress = END_ADDR;
-
 		for (uint32_t& a : memory) a = 0;
 	}
 
@@ -30,41 +27,39 @@ public:
 		std::streampos size = file.tellg();
 		file.seekg(0, std::ios::beg);
 
-		file.read((char*)&memory[(startAddr - startAddress) / 4], size);
+		file.read((char*)&memory[(startAddr - START_ADDR) / 4], size);
 
 		file.close();
 	}
 
 public:
-	void write(uint32_t addr, uint32_t data, DataSize dataSize)
+	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override
 	{
-		if (!hasAddress(addr)) return;
+		if (addr < START_ADDR || END_ADDR < addr) return NotInRange;
 
-		uint32_t memoryAddr = (addr - startAddress) / 4;
+		uint32_t memoryAddr = (addr - START_ADDR) / 4;
 		uint32_t offset = addr & 0b11;
-		bool misalignedException = false;
 
 		switch (dataSize)
 		{
 		case Word:
+			if (offset != 0)
+				return Misaligned;
 			memory[memoryAddr] = data;
-			misalignedException = offset == 0;
-			break;
+			return Success;
 
 		case HalfWord:
 			switch (offset)
 			{
 			case 0:
 				memory[memoryAddr] = (memory[memoryAddr] & 0xFFFF'0000U) | (data & 0x0000'FFFFU);
-				break;
+				return Success;
 			case 2:
 				memory[memoryAddr] = (memory[memoryAddr] & 0x0000'FFFFU) | ((data << 16) & 0xFFFF'0000U);
-				break;
+				return Success;
 			default:
-				misalignedException = true;
-				break;
+				return Misaligned;
 			}
-			break;
 
 		case Byte:
 		{
@@ -72,22 +67,20 @@ public:
 			uint32_t shiftAmount = offset * 8;
 
 			memory[memoryAddr] = (memory[memoryAddr] & ~(bitMask << shiftAmount)) | ((data & bitMask) << shiftAmount);
-			break;
+			return Success;
 		}
 
-		default:
-			misalignedException = true;
-			break;
+		default: // Shouldn't happen
+			return Misaligned;
 		}
 	}
 
-	uint32_t read(uint32_t addr, bool bReadOnly, DataSize dataSize, bool isSigned)
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override
 	{
-		if (!hasAddress(addr)) return 0;
+		if (addr < START_ADDR || END_ADDR < addr) return NotInRange;
 
-		uint32_t memoryAddr = (addr - startAddress) / 4;
+		uint32_t memoryAddr = (addr - START_ADDR) / 4;
 		uint32_t offset = addr & 0b11;
-		bool misalignedException = false;
 
 		uint16_t data16;
 		uint8_t data8;
@@ -95,25 +88,25 @@ public:
 		switch (dataSize)
 		{
 		case Word:
-			misalignedException = offset == 0;
-			return memory[memoryAddr];
+			if (offset != 0)
+				return Misaligned;
+			result = memory[memoryAddr];
+			return Success;
 
 		case HalfWord:
 			switch (offset)
 			{
 			case 0:
 				data16 = memory[memoryAddr] & 0x0000'FFFFU;
-
-				return isSigned ? (uint32_t)(int32_t)(int16_t)data16 : (uint32_t)data16;
+				result = isSigned ? (uint32_t)(int32_t)(int16_t)data16 : (uint32_t)data16;
+				return Success;
 			case 2:
 				data16 = (memory[memoryAddr] & 0xFFFF'0000U) >> 16;
-
-				return isSigned ? (uint32_t)(int32_t)(int16_t)data16 : (uint32_t)data16;
+				result = isSigned ? (uint32_t)(int32_t)(int16_t)data16 : (uint32_t)data16;
+				return Success;
 			default:
-				misalignedException = true;
-				break;
+				return Misaligned;
 			}
-			break;
 
 		case Byte:
 		{
@@ -122,14 +115,13 @@ public:
 
 			data8 = (memory[memoryAddr] & bitMask) >> shiftAmount;
 
-			return isSigned ? (uint32_t)(int32_t)(int8_t)data8 : (uint32_t)data8;
+			result = isSigned ? (uint32_t)(int32_t)(int8_t)data8 : (uint32_t)data8;
+			return Success;
 		}
 		
-		default:
-			break;
+		default: // Shouldn't happen
+			return Misaligned;
 		}
-
-		return 0;
 	}
 
 public:

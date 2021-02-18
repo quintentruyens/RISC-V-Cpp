@@ -26,19 +26,28 @@ void Bus::connectCPU(CPU* cpu)
 	cpu->connectBus(this);
 }
 
-void Bus::write(uint32_t addr, uint32_t data, enum DataSize dataSize)
+MemAccessResult Bus::write(uint32_t addr, uint32_t data, enum DataSize dataSize)
 {
 	for (BusDevice* device : devices)
-		device->write(addr, data, dataSize);
+	{
+		MemAccessResult accessResult = device->write(addr, data, dataSize);
+		if (accessResult == Success || accessResult == Misaligned)
+			return accessResult;
+	}
+
+	return NotInRange;
 }
 
-uint32_t Bus::read(uint32_t addr, bool bReadOnly, enum DataSize dataSize, bool isSigned)
+MemAccessResult Bus::read(uint32_t addr, uint32_t& result, bool bReadOnly, enum DataSize dataSize, bool isSigned)
 {
 	for (BusDevice* device : devices)
-		if (device->hasAddress(addr))
-			return device->read(addr, bReadOnly, dataSize, isSigned);
+	{
+		MemAccessResult accessResult = device->read(addr, result, bReadOnly, dataSize, isSigned);
+		if (accessResult == Success || accessResult == Misaligned)
+			return accessResult;
+	}
 
-	return 0;
+	return NotInRange;
 }
 
 // BUSDEVICE
@@ -54,9 +63,4 @@ BusDevice::~BusDevice()
 void BusDevice::connect(Bus* bus)
 {
 	this->bus = bus;
-}
-
-bool BusDevice::hasAddress(uint32_t addr)
-{
-	return startAddress <= addr && addr <= endAddress;
 }

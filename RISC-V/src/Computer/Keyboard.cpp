@@ -273,9 +273,6 @@ Keyboard::Keyboard(uint32_t addr)
 	: addr(addr), bCaps_lock(false), repeatingKey(0), bRepeating(false), timeSinceLastPress(0.0)
 {
 	buffer.reserve(256);
-
-	startAddress = addr;
-	endAddress = addr;
 }
 
 Keyboard::~Keyboard()
@@ -357,21 +354,24 @@ void Keyboard::Update(olcConsoleGameEngine* cge, float fElapsedTime)
 	}
 }
 
-void Keyboard::write(uint32_t addr, uint32_t data, DataSize dataSize)
+MemAccessResult Keyboard::write(uint32_t addr, uint32_t data, DataSize dataSize)
 {
+	return NotInRange;
 }
 
-uint32_t Keyboard::read(uint32_t addr, bool bReadOnly, DataSize dataSize, bool isSigned)
+MemAccessResult Keyboard::read(uint32_t addr, uint32_t& result, bool bReadOnly, DataSize dataSize, bool isSigned)
 {
-	if (addr != this->addr) return 0;
+	if (addr != this->addr) return NotInRange;
 
 	if (buffer.length() > 0)
 	{
-		wchar_t result = buffer[0];
+		wchar_t character = buffer[0];
 		if (!bReadOnly)
 			buffer.erase(0, 1);
 
-		return (uint32_t)result;
+		result = character;
+		return Success;
 	}
-	return 0;
+	result = 0;
+	return Success;
 }

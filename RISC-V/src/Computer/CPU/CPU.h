@@ -86,6 +86,7 @@ public:
 
 public:
 	uint32_t pc = 0;
+	uint32_t newPc = 0;
 
 	std::array<uint32_t, 32> regs;
 
@@ -171,8 +172,35 @@ public:
 	void Fence();
 	// System
 	void CsrRW(); void CsrRS(); void CsrRC(); void CsrRWI(); void CsrRSI(); void CsrRCI();
+	void Ebreak(); void Ecall();
+	void Mret();
 	// Nop
 	void Nop();
+
+public:
+	// Exceptions and interrupts
+	enum ExceptionType : uint32_t // Increasing order of priority
+	{
+		NoException = 0,
+		LoadAccessFault,
+		StoreAccessFault,
+		LoadAddressMisaligned,
+		StoreAddressMisaligned,
+		EnvironmentBreak,
+		UEnvironmentCall,
+		SEnvironmentCall,
+		MEnvironmentCall,
+		InstructionAddressMisaligned,
+		IllegalInstruction,
+		InstructionAccessFault
+	};
+	void createException(ExceptionType type, uint32_t value = 0);
+	uint32_t getCause(ExceptionType type);
+
+public:
+	// keeping track of current exceptions
+	ExceptionType currentExceptionType = NoException;
+	uint32_t exceptionVal = 0;
 
 public:
 	// convenience functions

@@ -14,9 +14,6 @@ public:
 	{
 		if (START_ADDR % 4 != 0 || COLUMNS > 32 || ROWS % 2 != 0) throw "invalid template argument";
 
-		startAddress = START_ADDR;
-		endAddress = START_ADDR + ROWS * 4 - 1;
-
 		for (uint32_t& a : memory) a = 0;
 	}
 	~Screen()
@@ -57,18 +54,23 @@ public:
 	}
 
 public:
-	void write(uint32_t addr, uint32_t data, DataSize dataSize)
+	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override
 	{
-		// This ignores dataSize and doesn't cause address misaligned exceptions
-		if (!hasAddress(addr)) return;
+		// This only handles words, other data sizes are considered misaligned
+		if (addr < START_ADDR ||  START_ADDR + ROWS * 4 <= addr) 
+			return NotInRange;
 
-		uint32_t memoryAddr = (addr - startAddress) / 4;
+		if (dataSize != Word || addr % 4 != 0) 
+			return Misaligned;
+
+		uint32_t memoryAddr = (addr - START_ADDR) / 4;
 		memory[memoryAddr] = data;
+		return Success;
 	}
 
-	uint32_t read(uint32_t addr, bool bReadOnly, DataSize dataSize, bool isSigned)
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override
 	{
-		return 0;
+		return NotInRange;
 	}
 
 public:

@@ -28,23 +28,41 @@ void CPU::connectBus(Bus* bus)
 
 void CPU::clock()
 {
-	bool illegalInstruction = false;
-	instruction = bus->read(pc);
-
-	uint32_t opcode = ((InstructionType::B*)&instruction)->opcode;
-
-	if ((opcode & 0b11) != 0b11)
+	currentExceptionType = NoException;
+	newPc = pc + 4;
+	MemAccessResult instrAccessResult = bus->read(pc, instruction);
+	if (instrAccessResult == NotInRange)
+		createException(InstructionAccessFault, pc);
+	else if (instrAccessResult == Misaligned) // This should not be possible, pc should always be 4-byte aligned
+		throw "instruction accesses should never be misaligned";
+	else
 	{
-		illegalInstruction = true;
-		return;
+		// Succes
+		uint32_t opcode = ((InstructionType::B*)&instruction)->opcode;
+
+		if ((opcode & 0b11) != 0b11)
+		{
+			createException(IllegalInstruction, instruction);
+		}
+		else
+		{
+			InstructionDecoder decoder = opcodeLookup[opcode >> 2];
+			Instruction instr = (this->*decoder)(instruction);
+		
+			(this->*instr.execute)();
+
+			if ((newPc & 3) != 0)
+				createException(InstructionAddressMisaligned, newPc);
+		}
 	}
 
-	InstructionDecoder decoder = opcodeLookup[opcode >> 2];
-	Instruction instr = (this->*decoder)(instruction);
-
-
-	(this->*instr.execute)();
-	pc += 4;
+	if (currentExceptionType != NoException)
+	{
+		// An exception occured
+		pc = csr.executeException(pc, getCause(currentExceptionType), exceptionVal, false);
+	}
+	else
+		pc = newPc;
 	
 	instret++;
 	cycle++;
@@ -74,7 +92,7 @@ void CPU::writeReg(uint32_t index, uint32_t data)
 // OPCODES
 CPU::Instruction CPU::XXX(uint32_t instr)
 {
-	bool illegalInstruction = true;
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -114,6 +132,7 @@ CPU::Instruction CPU::OP_IMM(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -184,6 +203,7 @@ CPU::Instruction CPU::OP(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -207,6 +227,7 @@ CPU::Instruction CPU::LOAD(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -226,6 +247,7 @@ CPU::Instruction CPU::STORE(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -261,6 +283,7 @@ CPU::Instruction CPU::BRANCH(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -276,6 +299,7 @@ CPU::Instruction CPU::JALR(uint32_t instr)
 	if (i.func3 == 0)
 		return { L"jalr", ArgumentType::Immediate, &CPU::Jalr };
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -286,15 +310,34 @@ CPU::Instruction CPU::MISC_MEM(uint32_t instr)
 	if (i.func3 == 0)
 		return { L"fence", ArgumentType::FenceType, &CPU::Fence };
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
 CPU::Instruction CPU::SYSTEM(uint32_t instr)
 {
-	InstructionType::I i = punnInstruction<InstructionType::I>(instr);
+	InstructionType::R i = punnInstruction<InstructionType::R>(instr);
 
 	switch (i.func3)
 	{
+	case 0b000:
+		if (i.rd == 0 && i.rs1 == 0)
+			switch (i.func7)
+			{
+			case 0b0000000:
+				if (i.rs2 == 0)
+					return { L"ecall", ArgumentType::None, &CPU::Ecall };
+				else if (i.rs2 == 1)
+					return { L"ebreak", ArgumentType::None, &CPU::Ebreak };
+				break;
+			case 0b0011000:
+				if (i.rs2 == 2)
+					return { L"mret", ArgumentType::None, &CPU::Mret };
+				break;
+			default:
+				break;
+			}
+		break;
 	case 0b001:
 		return { L"csrrw", ArgumentType::CSRRegister, &CPU::CsrRW };
 	case 0b010:
@@ -311,6 +354,7 @@ CPU::Instruction CPU::SYSTEM(uint32_t instr)
 		break;
 	}
 
+	createException(IllegalInstruction, instruction);
 	return { L"???", ArgumentType::None, &CPU::Nop };
 }
 
@@ -458,75 +502,189 @@ void CPU::MulHU()
 void CPU::Div()
 {
 	InstructionType::R instr = punnInstruction<InstructionType::R>(instruction);
-	writeReg(instr.rd, (int32_t)readReg(instr.rs1) / (int32_t)readReg(instr.rs2));
+	int32_t divisor = (int32_t)readReg(instr.rs2);
+	if (divisor == 0)
+		writeReg(instr.rd, 0xFFFF'FFFF);
+	else
+		writeReg(instr.rd, (int32_t)readReg(instr.rs1) / divisor);
 }
 
 void CPU::DivU()
 {
 	InstructionType::R instr = punnInstruction<InstructionType::R>(instruction);
-	writeReg(instr.rd, readReg(instr.rs1) / readReg(instr.rs2));
+	uint32_t divisor = readReg(instr.rs2);
+	if (divisor == 0)
+		writeReg(instr.rd, 0xFFFF'FFFF);
+	else
+		writeReg(instr.rd, readReg(instr.rs1) / divisor);
 }
 
 void CPU::Rem()
 {
 	InstructionType::R instr = punnInstruction<InstructionType::R>(instruction);
-	writeReg(instr.rd, (int32_t)readReg(instr.rs1) % (int32_t)readReg(instr.rs2));
+	int32_t divisor = (int32_t)readReg(instr.rs2);
+	if (divisor == 0)
+		writeReg(instr.rd, readReg(instr.rs1));
+	else
+		writeReg(instr.rd, (int32_t)readReg(instr.rs1) % divisor);
 }
 
 void CPU::RemU()
 {
 	InstructionType::R instr = punnInstruction<InstructionType::R>(instruction);
-	writeReg(instr.rd, readReg(instr.rs1) % readReg(instr.rs2));
+	uint32_t divisor = readReg(instr.rs2);
+	if (divisor == 0)
+		writeReg(instr.rd, readReg(instr.rs1));
+	else
+		writeReg(instr.rd, readReg(instr.rs1) % divisor);
 }
 
 // Load
 void CPU::Lb()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
-	writeReg(instr.rd, bus->read(getImm(instr) + readReg(instr.rs1), false, Byte, true));
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	uint32_t value;
+	MemAccessResult accessResult = bus->read(addr, value, false, Byte, true);
+	switch (accessResult)
+	{
+	case Success:
+		writeReg(instr.rd, value);
+		return;
+	case NotInRange:
+		createException(LoadAccessFault, addr);
+		return;
+	case Misaligned:
+		createException(LoadAddressMisaligned, addr);
+		return;
+	default:
+		return;
+	}
 }
 
 void CPU::Lh()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
-	writeReg(instr.rd, bus->read(getImm(instr) + readReg(instr.rs1), false, HalfWord, true));
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	uint32_t value;
+	MemAccessResult accessResult = bus->read(addr, value, false, HalfWord, true);
+	switch (accessResult)
+	{
+	case Success:
+		writeReg(instr.rd, value);
+		return;
+	case NotInRange:
+		createException(LoadAccessFault, addr);
+		return;
+	case Misaligned:
+		createException(LoadAddressMisaligned, addr);
+		return;
+	default:
+		return;
+	}
 }
 
 void CPU::Lw()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
-	writeReg(instr.rd, bus->read(getImm(instr) + readReg(instr.rs1), false, Word, true));
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	uint32_t value;
+	MemAccessResult accessResult = bus->read(addr, value, false, Word, true);
+	switch (accessResult)
+	{
+	case Success:
+		writeReg(instr.rd, value);
+		return;
+	case NotInRange:
+		createException(LoadAccessFault, addr);
+		return;
+	case Misaligned:
+		createException(LoadAddressMisaligned, addr);
+		return;
+	default:
+		return;
+	}
 }
 
 void CPU::LbU()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
-	writeReg(instr.rd, bus->read(getImm(instr) + readReg(instr.rs1), false, Byte, false));
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	uint32_t value;
+	MemAccessResult accessResult = bus->read(addr, value, false, Byte, false);
+	switch (accessResult)
+	{
+	case Success:
+		writeReg(instr.rd, value);
+		return;
+	case NotInRange:
+		createException(LoadAccessFault, addr);
+		return;
+	case Misaligned:
+		createException(LoadAddressMisaligned, addr);
+		return;
+	default:
+		return;
+	}
 }
 
 void CPU::LhU()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
-	writeReg(instr.rd, bus->read(getImm(instr) + readReg(instr.rs1), false, HalfWord, false));
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	uint32_t value;
+	MemAccessResult accessResult = bus->read(addr, value, false, HalfWord, false);
+	switch (accessResult)
+	{
+	case Success:
+		writeReg(instr.rd, value);
+		return;
+	case NotInRange:
+		createException(LoadAccessFault, addr);
+		return;
+	case Misaligned:
+		createException(LoadAddressMisaligned, addr);
+		return;
+	default:
+		return;
+	}
 }
 
 // Store
 void CPU::Sb()
 {
 	InstructionType::S instr = punnInstruction<InstructionType::S>(instruction);
-	bus->write(getImm(instr) + readReg(instr.rs1), readReg(instr.rs2), Byte);
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	MemAccessResult accessResult = bus->write(addr, readReg(instr.rs2), Byte);
+	
+	if (accessResult == NotInRange)
+		createException(StoreAccessFault, addr);
+	else if (accessResult == Misaligned)
+		createException(StoreAddressMisaligned, addr);
 }
 
 void CPU::Sh()
 {
 	InstructionType::S instr = punnInstruction<InstructionType::S>(instruction);
-	bus->write(getImm(instr) + readReg(instr.rs1), readReg(instr.rs2), HalfWord);
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	MemAccessResult accessResult = bus->write(addr, readReg(instr.rs2), HalfWord);
+
+	if (accessResult == NotInRange)
+		createException(StoreAccessFault, addr);
+	else if (accessResult == Misaligned)
+		createException(StoreAddressMisaligned, addr);
 }
 
 void CPU::Sw()
 {
 	InstructionType::S instr = punnInstruction<InstructionType::S>(instruction);
-	bus->write(getImm(instr) + readReg(instr.rs1), readReg(instr.rs2), Word);
+	uint32_t addr = getImm(instr) + readReg(instr.rs1);
+	MemAccessResult accessResult = bus->write(addr, readReg(instr.rs2), Word);
+
+	if (accessResult == NotInRange)
+		createException(StoreAccessFault, addr);
+	else if (accessResult == Misaligned)
+		createException(StoreAddressMisaligned, addr);
 }
 
 // Lui
@@ -548,44 +706,42 @@ void CPU::Beq()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if (readReg(instr.rs1) == readReg(instr.rs2))
-	{
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch targetAddr;
-	}
+		newPc = pc + getImm(instr);
 }
 
 void CPU::Bne()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if (readReg(instr.rs1) != readReg(instr.rs2))
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch
+		newPc = pc + getImm(instr);
 }
 
 void CPU::Blt()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if ((int32_t)readReg(instr.rs1) < (int32_t)readReg(instr.rs2))
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch
+		newPc = pc + getImm(instr);
 }
 
 void CPU::Bge()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if ((int32_t)readReg(instr.rs1) >= (int32_t)readReg(instr.rs2))
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch
+		newPc = pc + getImm(instr);
 }
 
 void CPU::BltU()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if (readReg(instr.rs1) < readReg(instr.rs2))
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch
+		newPc = pc + getImm(instr);
 }
 
 void CPU::BgeU()
 {
 	InstructionType::B instr = punnInstruction<InstructionType::B>(instruction);
 	if (readReg(instr.rs1) >= readReg(instr.rs2))
-		pc += getImm(instr) - 4; // Also account for the increment that will come after the branch
+		newPc = pc + getImm(instr);
 }
 
 // Jal
@@ -593,7 +749,7 @@ void CPU::Jal()
 {
 	InstructionType::J instr = punnInstruction<InstructionType::J>(instruction);
 	writeReg(instr.rd, pc + 4);
-	pc += getImm(instr) - 4;
+	newPc = pc + getImm(instr);
 }
 
 // Jalr
@@ -601,7 +757,7 @@ void CPU::Jalr()
 {
 	InstructionType::I instr = punnInstruction<InstructionType::I>(instruction);
 	writeReg(instr.rd, pc + 4);
-	pc = (readReg(instr.rs1) + getImm(instr) - 4) & 0xFFFF'FFFEU;
+	newPc = (readReg(instr.rs1) + getImm(instr)) & 0xFFFF'FFFEU;
 }
 
 // Fence
@@ -618,14 +774,18 @@ void CPU::CsrRW()
 	if (instr.rd != 0)
 	{
 		uint32_t value;
-		if (!csr.read(csrAddr, value, false))
-			return; // invalid instruction exception
+		if (!csr.read(csrAddr, value, false)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 
 		writeReg(instr.rd, value);
 	}
 
-	if (!csr.write(csrAddr, readReg(instr.rs1)))
-		return; // invalid instruction exception
+	if (!csr.write(csrAddr, readReg(instr.rs1))) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 }
 
 void CPU::CsrRS()
@@ -635,8 +795,10 @@ void CPU::CsrRS()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value, false))
-		return; // invalid instruction exception
+	if (!csr.read(csrAddr, value, false)) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 
 	writeReg(instr.rd, value);
 
@@ -646,8 +808,10 @@ void CPU::CsrRS()
 		// write new value
 		uint32_t newValue = value | readReg(instr.rs1);
 
-		if (!csr.write(csrAddr, newValue))
-			return; // invalid instruction exception
+		if (!csr.write(csrAddr, newValue)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 	}
 }
 
@@ -658,8 +822,10 @@ void CPU::CsrRC()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value, false))
-		return; // invalid instruction exception
+	if (!csr.read(csrAddr, value, false)) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 
 	writeReg(instr.rd, value);
 
@@ -669,8 +835,10 @@ void CPU::CsrRC()
 		// write new value
 		uint32_t newValue = value & (~readReg(instr.rs1));
 
-		if (!csr.write(csrAddr, newValue))
-			return; // invalid instruction exception
+		if (!csr.write(csrAddr, newValue)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 	}
 }
 
@@ -682,14 +850,18 @@ void CPU::CsrRWI()
 	if (instr.rd != 0)
 	{
 		uint32_t value;
-		if (!csr.read(csrAddr, value, false))
-			return; // invalid instruction exception
+		if (!csr.read(csrAddr, value, false)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 
 		writeReg(instr.rd, value);
 	}
 
-	if (!csr.write(csrAddr, instr.rs1))
-		return; // invalid instruction exception
+	if (!csr.write(csrAddr, instr.rs1)) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 }
 
 void CPU::CsrRSI()
@@ -699,8 +871,10 @@ void CPU::CsrRSI()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value, false))
-		return; // invalid instruction exception
+	if (!csr.read(csrAddr, value, false)) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 
 	writeReg(instr.rd, value);
 
@@ -710,8 +884,10 @@ void CPU::CsrRSI()
 		// write new value
 		uint32_t newValue = value | instr.rs1;
 
-		if (!csr.write(csrAddr, newValue))
-			return; // invalid instruction exception
+		if (!csr.write(csrAddr, newValue)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 	}
 }
 
@@ -722,8 +898,10 @@ void CPU::CsrRCI()
 
 	// read old value
 	uint32_t value;
-	if (!csr.read(csrAddr, value, false))
-		return; // invalid instruction exception
+	if (!csr.read(csrAddr, value, false)) {
+		createException(IllegalInstruction, instruction);
+		return;
+	}
 
 	writeReg(instr.rd, value);
 
@@ -733,9 +911,26 @@ void CPU::CsrRCI()
 		// write new value
 		uint32_t newValue = value & (~instr.rs1);
 
-		if (!csr.write(csrAddr, newValue))
-			return; // invalid instruction exception
+		if (!csr.write(csrAddr, newValue)) {
+			createException(IllegalInstruction, instruction);
+			return;
+		}
 	}
+}
+
+void CPU::Ebreak()
+{
+	createException(EnvironmentBreak);
+}
+
+void CPU::Ecall()
+{
+	createException(MEnvironmentCall);
+}
+
+void CPU::Mret()
+{
+	newPc = csr.returnExcepion();
 }
 
 // Nop
@@ -743,7 +938,48 @@ void CPU::Nop()
 {
 }
 
-// Disassembly
+// Exceptions
+void CPU::createException(ExceptionType type, uint32_t value)
+{
+	if (type > currentExceptionType)
+	{
+		currentExceptionType = type;
+		exceptionVal = value;
+	}
+}
+
+uint32_t CPU::getCause(ExceptionType type)
+{
+	switch (type)
+	{
+	case CPU::LoadAccessFault:
+		return 5;
+	case CPU::StoreAccessFault:
+		return 7;
+	case CPU::LoadAddressMisaligned:
+		return 4;
+	case CPU::StoreAddressMisaligned:
+		return 6;
+	case CPU::EnvironmentBreak:
+		return 3;
+	case CPU::UEnvironmentCall:
+		return 8;
+	case CPU::SEnvironmentCall:
+		return 9;
+	case CPU::MEnvironmentCall:
+		return 11;
+	case CPU::InstructionAddressMisaligned:
+		return 0;
+	case CPU::IllegalInstruction:
+		return 2;
+	case CPU::InstructionAccessFault:
+		return 1;
+	default:
+		return 0; // Includes NoException, shouldn't happen
+	}
+}
+
+// Disassembly and convenience functions
 std::wstring CPU::disassemble(uint32_t instr)
 {
 	uint32_t opcode = ((InstructionType::B*)&instr)->opcode;

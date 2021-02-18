@@ -28,8 +28,8 @@ public:
 	void Update(olcConsoleGameEngine* cge, float fElapsedTime);
 
 public:
-	void Keyboard::write(uint32_t addr, uint32_t data, DataSize dataSize) override;
-	uint32_t Keyboard::read(uint32_t addr, bool bReadOnly, DataSize dataSize, bool isSigned) override;
+	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override;
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override;
 
 private:
 	uint32_t addr;
