@@ -10,11 +10,9 @@ class Screen : public BusDevice
 public:
 	// onColour as foreground, offColour as background
 	Screen(short colour)
-		: colour(colour)
+		: colour(colour), memory()
 	{
 		if (START_ADDR % 4 != 0 || COLUMNS > 32 || ROWS % 2 != 0) throw "invalid template argument";
-
-		for (uint32_t& a : memory) a = 0;
 	}
 	~Screen()
 	{
@@ -54,23 +52,23 @@ public:
 	}
 
 public:
-	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override
+	MemAccessResult write(uint32_t addr, uint32_t data, enum DataSize dataSize = DataSize::Word) override
 	{
 		// This only handles words, other data sizes are considered misaligned
 		if (addr < START_ADDR ||  START_ADDR + ROWS * 4 <= addr) 
-			return NotInRange;
+			return MemAccessResult::NotInRange;
 
-		if (dataSize != Word || addr % 4 != 0) 
-			return Misaligned;
+		if (dataSize != DataSize::Word || addr % 4 != 0)
+			return MemAccessResult::Misaligned;
 
 		uint32_t memoryAddr = (addr - START_ADDR) / 4;
 		memory[memoryAddr] = data;
-		return Success;
+		return MemAccessResult::Success;
 	}
 
-	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, enum DataSize dataSize = DataSize::Word, bool isSigned = true) override
 	{
-		return NotInRange;
+		return MemAccessResult::NotInRange;
 	}
 
 public:

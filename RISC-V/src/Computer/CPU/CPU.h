@@ -83,6 +83,7 @@ public:
 public:
 	Bus* bus;
 	CSR csr;
+	Timer* timer;
 
 public:
 	uint32_t pc = 0;
@@ -105,7 +106,7 @@ public:
 
 	// This will define the type of arguments used with a function, eg. Registers (like 'add a0, a1, a2'), Immediate (like 'addi a0, a1, 0x5')
 	// or None (like 'ecall'). This is used to disassemble instructions.
-	enum ArgumentType
+	enum class ArgumentType
 	{
 		Immediate = 0, // eg. 'addi a0, a1, 0x5'
 		Register, // eg. 'add a0, a1, a2'
@@ -179,7 +180,7 @@ public:
 
 public:
 	// Exceptions and interrupts
-	enum ExceptionType : uint32_t // Increasing order of priority
+	enum class ExceptionType : uint32_t // Increasing order of priority
 	{
 		NoException = 0,
 		LoadAccessFault,
@@ -199,7 +200,7 @@ public:
 
 public:
 	// keeping track of current exceptions
-	ExceptionType currentExceptionType = NoException;
+	ExceptionType currentExceptionType = ExceptionType::NoException;
 	uint32_t exceptionVal = 0;
 
 public:

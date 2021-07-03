@@ -28,8 +28,11 @@ public:
 	void Update(olcConsoleGameEngine* cge, float fElapsedTime);
 
 public:
-	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override;
-	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override;
+	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = DataSize::Word) override;
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = DataSize::Word, bool isSigned = true) override;
+	
+private:
+	void addCharacter(wchar_t character);
 
 private:
 	uint32_t addr;

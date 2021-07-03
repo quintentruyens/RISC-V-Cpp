@@ -33,6 +33,9 @@
     <ClCompile Include="src\Computer\Keyboard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Computer\CPU\Timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Computer\CPU\CPU.h">
@@ -69,6 +72,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Computer\Keyboard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Computer\CPU\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

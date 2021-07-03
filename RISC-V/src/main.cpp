@@ -9,6 +9,7 @@
 #include "Computer/Screen.h"
 #include "Computer/Terminal.h"
 #include "Computer/Keyboard.h"
+#include "Computer/Timer.h"
 #include "Computer/CPU/CPU.h"
 #include "Computer/MemoryMap.h"
 #include "Drawing/Button.h"
@@ -23,7 +24,7 @@ public:
 	}
 
 public:
-	Bus bus;
+	Bus* bus;
 	RAM<MemoryMap::RAM.BaseAddr, MemoryMap::RAM.LimitAddr>* ram;
 	Screen<MemoryMap::ScreenBaseAddr, 32, 32>* screen;
 	Terminal<MemoryMap::TerminalAddr, 16, 40>* terminal;
@@ -50,6 +51,13 @@ public:
 			s[i] = L"0123456789ABCDEF"[n & 0xF];
 		return s;
 	};
+	std::wstring hex(uint64_t n, uint8_t d)
+	{
+		std::wstring s(d, L'0');
+		for (int i = d - 1; i >= 0; i--, n >>= 4)
+			s[i] = L"0123456789ABCDEF"[n & 0xF];
+		return s;
+	};
 
 	void DrawMemory(int x, int y, uint32_t addr, int rows, int columns)
 	{
@@ -59,8 +67,8 @@ public:
 			for (int col = 0; col < columns; col++)
 			{
 				uint32_t data;
-				MemAccessResult accessResult = bus.read(addr, data, true);
-				sOffset += L" " + (accessResult == Success ? hex(data, 8) : L"????????");
+				enum class MemAccessResult accessResult = bus->read(addr, data, true);
+				sOffset += L" " + (accessResult == MemAccessResult::Success ? hex(data, 8) : L"????????");
 				addr += 4;
 			}
 			DrawString(x, y + row, sOffset, FG_WHITE | BG_DARK_BLUE);
@@ -70,8 +78,8 @@ public:
 	void DrawCpu(int x, int y)
 	{
 		uint32_t instr;
-		MemAccessResult accessResult = bus.read(cpu->pc, instr, true);
-		DrawString(x, y, L"Instr: " + (accessResult == Success ? cpu->disassemble(instr) : L"Error"), FG_WHITE | BG_DARK_BLUE);
+		MemAccessResult accessResult = bus->read(cpu->pc, instr, true);
+		DrawString(x, y, L"Instr: " + (accessResult == MemAccessResult::Success ? cpu->disassemble(instr) : L"Error"), FG_WHITE | BG_DARK_BLUE);
 		DrawString(x, y + 1, L"PC: 0x" + hex(cpu->pc, 8), FG_WHITE | BG_DARK_BLUE);
 
 		for (int i = 0; i < 32; i++)
@@ -84,7 +92,7 @@ public:
 	void DrawCSR(int x, int y)
 	{
 		CSR csr = cpu->csr;
-		for (int i = 0; i < csr.validAdresses.size(); i++)
+		for (size_t i = 0; i < csr.validAdresses.size(); i++)
 		{
 			uint32_t addr = csr.validAdresses[i];
 			std::wstring name = csr.getName(addr);
@@ -93,6 +101,12 @@ public:
 
 			DrawString(x, y + i, name + L":" + std::wstring(10 - name.length(), ' ') + hex(val, 8), FG_WHITE | BG_DARK_BLUE);
 		}
+
+		Timer* timer = bus->timer;
+		int yStart = y + csr.validAdresses.size() + 3;
+		short fgColor = timer->hasInterrupt() ? FG_RED : FG_WHITE;
+		DrawString(x, yStart,   L"mtime:     " + hex(timer->getTimeFull(), 16), FG_WHITE | BG_DARK_BLUE);
+		DrawString(x, yStart+1, L"mtimecmp:  " + hex(timer->getTimeCmpFull(), 16), fgColor | BG_DARK_BLUE);
 	}
 	
 	void UpdateButtons()
@@ -123,19 +137,17 @@ public:
 		ram = new RAM<MemoryMap::RAM.BaseAddr, MemoryMap::RAM.LimitAddr>();
 		ram->fillFromFile("data.bin", MemoryMap::Data.BaseAddr);
 		ram->fillFromFile("text.bin", MemoryMap::Text.BaseAddr);
-		bus.connectDevice(ram);
 
 		screen = new Screen<MemoryMap::ScreenBaseAddr, 32, 32>(FG_GREEN | BG_DARK_GREY);
-		bus.connectDevice(screen);
 
 		terminal = new Terminal<MemoryMap::TerminalAddr, 16, 40>();
-		bus.connectDevice(terminal);
 
 		keyboard = new Keyboard(MemoryMap::KeyboardAddr);
-		bus.connectDevice(keyboard);
+
+		bus = new Bus({ ram, screen, terminal, keyboard });
 
 		cpu = new CPU([this]() mutable { running = false; playButton->colour = FG_WHITE | BG_CYAN; });
-		cpu->connectBus(&bus);
+		cpu->connectBus(bus);
 
 		// create interface
 		std::wstring tabNames[] = { std::wstring(L"Memory"), std::wstring(L"Terminal"), std::wstring(L"CSR") };

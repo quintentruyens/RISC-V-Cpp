@@ -317,7 +317,7 @@ void Keyboard::Update(olcConsoleGameEngine* cge, float fElapsedTime)
 	}
 	uint32_t oldRepeatingKey = repeatingKey;
 
-	for (uint32_t i = 8; i < 256 && buffer.length() < 256; i++) // Skip mouse buttons, start at first keyboard button, number 8
+	for (uint32_t i = 8; i < 256; i++) // Skip mouse buttons, start at first keyboard button, number 8
 	{
 		auto key = cge->GetKey(i);
 		if (key.bPressed)
@@ -325,9 +325,7 @@ void Keyboard::Update(olcConsoleGameEngine* cge, float fElapsedTime)
 			repeatingKey = i;
 
 			wchar_t character = getChar(i, shift, altGr, ctrl);
-
-			if (character != 0)
-				buffer.push_back(character);
+			addCharacter(character);
 		}
 	}
 
@@ -342,8 +340,7 @@ void Keyboard::Update(olcConsoleGameEngine* cge, float fElapsedTime)
 			bRepeating = true;
 
 			wchar_t character = getChar(repeatingKey, shift, altGr, ctrl);
-			if (buffer.length() < 256 && character != 0)
-				buffer.push_back(character);
+			addCharacter(character);
 		}
 	}
 	else
@@ -354,24 +351,38 @@ void Keyboard::Update(olcConsoleGameEngine* cge, float fElapsedTime)
 	}
 }
 
+void Keyboard::addCharacter(wchar_t character)
+{
+	if (character != 0 && buffer.length() < 256)
+	{
+		if (buffer.length() == 0)
+			bus->postInterrupt();
+		buffer.push_back(character);
+	}
+}
+
 MemAccessResult Keyboard::write(uint32_t addr, uint32_t data, DataSize dataSize)
 {
-	return NotInRange;
+	return MemAccessResult::NotInRange;
 }
 
 MemAccessResult Keyboard::read(uint32_t addr, uint32_t& result, bool bReadOnly, DataSize dataSize, bool isSigned)
 {
-	if (addr != this->addr) return NotInRange;
+	if (addr != this->addr) return MemAccessResult::NotInRange;
 
 	if (buffer.length() > 0)
 	{
 		wchar_t character = buffer[0];
 		if (!bReadOnly)
+		{
 			buffer.erase(0, 1);
+			if (buffer.length() == 0)
+				bus->clearInterrupt();
+		}
 
 		result = character;
-		return Success;
+		return MemAccessResult::Success;
 	}
 	result = 0;
-	return Success;
+	return MemAccessResult::Success;
 }

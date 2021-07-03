@@ -31,21 +31,21 @@ public:
 	}
 
 public:
-	MemAccessResult write(uint32_t addr, uint32_t data, DataSize dataSize = Word) override
+	MemAccessResult write(uint32_t addr, uint32_t data, enum DataSize dataSize = DataSize::Word) override
 	{
-		if (addr != ADDR) return NotInRange;
+		if (addr != ADDR) return MemAccessResult::NotInRange;
 		// Misaligned is no longer possible, if addr == ADDR, it is a multiple of 4 and always aligned
 
 		wchar_t character = (wchar_t)data;
 		if (character == 10 || character == 13) // Newline
 		{
 			newLine();
-			return Success;
+			return MemAccessResult::Success;
 		}
 		if (character == 12) // Clear screen
 		{
 			clear();
-			return Success;
+			return MemAccessResult::Success;
 		}
 
 		std::wstring& rowString = rows[currentRow];
@@ -54,7 +54,7 @@ public:
 		{
 			if (rowString.length() > 0)
 				rowString.pop_back();
-			return Success;
+			return MemAccessResult::Success;
 		}
 		if ((32 <= character && character < 127) || character > 160)
 		{
@@ -62,13 +62,14 @@ public:
 				newLine();
 
 			rows[currentRow].push_back((wchar_t)data);
-			return Success;
+			return MemAccessResult::Success;
 		}
+		return MemAccessResult::Success;
 	}
 
-	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, DataSize dataSize = Word, bool isSigned = true) override
+	MemAccessResult read(uint32_t addr, uint32_t& result, bool bReadOnly = false, enum DataSize dataSize = DataSize::Word, bool isSigned = true) override
 	{
-		return NotInRange;
+		return MemAccessResult::NotInRange;
 	}
 
 private:

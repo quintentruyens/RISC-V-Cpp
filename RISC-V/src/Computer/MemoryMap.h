@@ -15,9 +15,11 @@ namespace MemoryMap
 	constexpr Range Data = { 0x0101'0000, 0x0103'FFFFU };
 
 	constexpr uint32_t HeapBaseAddr = 0x0104'0000U;
-	constexpr uint32_t StackBaseAddr = 0x03FF'FFFC;
+	constexpr uint32_t StackBaseAddr = 0x03FF'FFFCU;
 
-	constexpr uint32_t ScreenBaseAddr = 0xF000'0000;
-	constexpr uint32_t TerminalAddr = 0xF000'0080;
-	constexpr uint32_t KeyboardAddr = 0xF000'0081;
+	constexpr uint32_t ScreenBaseAddr = 0xF000'0000U;
+	constexpr uint32_t TerminalAddr = 0xF000'0080U;
+	constexpr uint32_t KeyboardAddr = 0xF000'0080U;
+
+	constexpr uint32_t TimerAddr = 0xF000'0090U;
 }
