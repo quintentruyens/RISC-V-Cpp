@@ -99,7 +99,7 @@ public:
 			uint32_t val;
 			csr.read(addr, val, true);
 
-			DrawString(x, y + i, name + L":" + std::wstring(10 - name.length(), ' ') + hex(val, 8), FG_WHITE | BG_DARK_BLUE);
+			DrawString(x, y + i, name + L":" + std::wstring(14 - name.length(), ' ') + hex(val, 8), FG_WHITE | BG_DARK_BLUE);
 		}
 
 		Timer* timer = bus->timer;

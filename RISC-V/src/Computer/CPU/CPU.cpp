@@ -29,6 +29,8 @@ void CPU::connectBus(Bus* bus)
 
 void CPU::clock()
 {
+	csr.clock();
+
 	currentExceptionType = ExceptionType::NoException;
 	newPc = pc + 4;
 	MemAccessResult instrAccessResult = bus->read(pc, instruction);
@@ -64,9 +66,6 @@ void CPU::clock()
 	}
 	else
 		pc = newPc;
-	
-	instret++;
-	cycle++;
 
 	// Interrupts are checked at the very end to simulate being at the very front while keeping both exception types close together
 	// Being at the front avoids getting the wrong mepc when an interrupt is available immediately upon executing an mret, as

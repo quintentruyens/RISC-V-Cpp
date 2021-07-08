@@ -11,13 +11,25 @@ constexpr uint32_t MISA = 0x301;
 constexpr uint32_t MIE = 0x304;
 constexpr uint32_t MTVEC = 0x305;
 
+constexpr uint32_t MCOUNTINHIBIT = 0x320;
+
 constexpr uint32_t MSCRATCH = 0x340;
 constexpr uint32_t MEPC = 0x341;
 constexpr uint32_t MCAUSE = 0x342;
 constexpr uint32_t MTVAL = 0x343;
 constexpr uint32_t MIP = 0x344;
 
+constexpr uint32_t DEBUG = 0x7C0;
+
 constexpr uint32_t UREG00 = 0x800;
+
+constexpr uint32_t MCYCLE = 0xB00;
+
+constexpr uint32_t MINSTRET = 0xB02;
+
+constexpr uint32_t MCYCLEH = 0xB80;
+
+constexpr uint32_t MINSTRETH = 0xB82;
 
 constexpr uint32_t CYCLE = 0xC00;
 constexpr uint32_t TIME = 0xC01;
@@ -32,13 +44,11 @@ constexpr uint32_t MARCHID = 0xF12;
 constexpr uint32_t MIMPID = 0xF13;
 constexpr uint32_t MHARTID = 0xF14;
 
-constexpr uint32_t DEBUG = 0xFC0;
-
 CSR::CSR(CPU* cpu, const std::function<void()>& startDebug)
 	: cpu(cpu), startDebug(startDebug)
 {
-	validAdresses = { MSTATUS, MISA, MIE, MTVEC, MSCRATCH, MEPC, MCAUSE, MTVAL, MIP, UREG00, CYCLE, TIME, INSTRET, CYCLEH, TIMEH, INSTRETH, 
-		MVENDORID, MARCHID, MIMPID, MHARTID, DEBUG };
+	validAdresses = { MSTATUS, MISA, MIE, MTVEC, MCOUNTINHIBIT, MSCRATCH, MEPC, MCAUSE, MTVAL, MIP, DEBUG, UREG00, CYCLE, TIME, INSTRET, CYCLEH, TIMEH, 
+		INSTRETH, MVENDORID, MARCHID, MIMPID, MHARTID };
 	
 }
 
@@ -70,6 +80,10 @@ bool CSR::read(uint32_t address, uint32_t& value, bool bReadOnly)
 		value = mtvec;
 		return true;
 
+	case MCOUNTINHIBIT:
+		value = countinhibit;
+		return true;
+
 	case MSCRATCH:
 		value = mscratch;
 		return true;
@@ -87,28 +101,36 @@ bool CSR::read(uint32_t address, uint32_t& value, bool bReadOnly)
 		value = *(uint32_t*)&mipInternal;
 		return true;
 
+	case DEBUG:
+		value = debug;
+		return true;
+
 	case UREG00:
 		value = ureg00;
 		return true;
 
+	case MCYCLE:
 	case CYCLE:
-		value = this->cpu->cycle & 0xFFFF'FFFFU;
+		value = cycle & 0xFFFF'FFFFU;
 		return true;
 	case TIME:
 		value = this->cpu->timer->getTimeLow();
 		return true;
+	case MINSTRET:
 	case INSTRET:
-		value = this->cpu->instret & 0xFFFF'FFFFU;
+		value = instret & 0xFFFF'FFFFU;
 		return true;
 
+	case MCYCLEH:
 	case CYCLEH:
-		value = this->cpu->cycle >> 32;
+		value = cycle >> 32;
 		return true;
 	case TIMEH:
 		value = this->cpu->timer->getTimeHigh();
 		return true;
+	case MINSTRETH:
 	case INSTRETH:
-		value = this->cpu->instret >> 32;
+		value = instret >> 32;
 		return true;
 
 	case MVENDORID:
@@ -116,12 +138,6 @@ bool CSR::read(uint32_t address, uint32_t& value, bool bReadOnly)
 	case MIMPID:
 	case MHARTID:
 		value = 0;
-		return true;
-
-	case DEBUG:
-		value = 0;
-		if (!bReadOnly)
-			startDebug();
 		return true;
 
 	default:
@@ -155,6 +171,10 @@ bool CSR::write(uint32_t address, uint32_t value)
 		mtvec = value & 0xFFFF'FFFDU;
 		return true;
 
+	case MCOUNTINHIBIT:
+		countinhibit = value & 0b101;
+		return true;
+
 	case MSCRATCH:
 		mscratch = value;
 		return true;
@@ -170,11 +190,31 @@ bool CSR::write(uint32_t address, uint32_t value)
 	case MIP:
 		// M-level ip bits are not writable directly, U- or S-level bits would be writable if they were implemented
 		return true;
+	
+	case DEBUG:
+		debug = value;
+		if (debug == 0)
+			startDebug();
+		return true;
 
 	case UREG00:
 		ureg00 = value;
 		return true;
 	
+	case MCYCLE:
+		cycle = (cycle & 0xFFFF'FFFF'0000'0000U) | value;
+		return true;
+	case MINSTRET:
+		instret = (instret & 0xFFFF'FFFF'0000'0000U) | value;
+		return true;
+
+	case MCYCLEH:
+		cycle = (cycle & 0x0000'0000'FFFF'FFFFU) | ((uint64_t)value << 32);
+		return true;
+	case MINSTRETH:
+		instret = (instret & 0x0000'0000'FFFF'FFFFU) | ((uint64_t)value << 32);
+		return true;
+
 	// others are read-only, so treat as non-existant
 	default:
 		return false;
@@ -195,6 +235,9 @@ std::wstring CSR::getName(uint32_t address)
 	case MTVEC:
 		return L"mtvec";
 
+	case MCOUNTINHIBIT:
+		return L"mcountinhibit";
+
 	case MSCRATCH:
 		return L"mscratch";
 	case MEPC:
@@ -206,8 +249,20 @@ std::wstring CSR::getName(uint32_t address)
 	case MIP:
 		return L"mip";
 
+	case DEBUG:
+		return L"debug";
+
 	case UREG00:
 		return L"ureg00";
+
+	case MCYCLE:
+		return L"mcycle";
+	case MINSTRET:
+		return L"minstret";
+	case MCYCLEH:
+		return L"mcycleh";
+	case MINSTRETH:
+		return L"minstreth";
 
 	case CYCLE:
 		return L"cycle";
@@ -232,9 +287,6 @@ std::wstring CSR::getName(uint32_t address)
 	case MHARTID:
 		return L"mhartid";
 
-	case DEBUG:
-		return L"debug";
-
 	default:
 		return L"???";
 	}
@@ -252,7 +304,7 @@ uint32_t CSR::executeException(uint32_t epc, uint32_t causeNum, uint32_t val, bo
 	if (!bInterrupt || (mtvec & 0x1) == 0)
 	{
 		// Non-vectored interrupt
-		return mtvec;
+		return (mtvec & 0xFFFF'FFFCU);
 	}
 	else
 	{
@@ -300,6 +352,20 @@ CSR::CheckInterruptsReturn CSR::checkInterrupts(uint32_t epc)
 
 	uint32_t newPc = executeException(epc, cause, 0, true);
 	return { true, newPc };
+}
+
+void CSR::clock()
+{
+	if ((countinhibit & 0b001) == 0)
+		instret++;
+	if ((countinhibit & 0b100) == 0)
+		cycle++;
+	if (debug != 0xFFFF'FFFF)
+	{
+		debug--;
+		if (debug == 0)
+			startDebug();
+	}
 }
 
 void CSR::updateMip()

@@ -219,8 +219,4 @@ public:
 	uint32_t getImm(InstructionType::B instr); // Signed
 	uint32_t getImm(InstructionType::U instr); // Signed
 	uint32_t getImm(InstructionType::J instr); // Signed
-
-public:
-	uint64_t instret = 0; // amount of instructions executed
-	uint64_t cycle = 0; // amount of cycles
 };

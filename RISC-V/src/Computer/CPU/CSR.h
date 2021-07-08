@@ -34,6 +34,9 @@ public:
 	} checkInterrupts(uint32_t epc);
 
 public:
+	void clock();
+
+public:
 	// For drawing
 	std::vector<uint32_t> validAdresses;
 
@@ -99,5 +102,12 @@ private:
 
 	uint32_t ureg00 = 0;
 	std::function<void()> startDebug;
+
+private:
+	uint64_t instret = 0; // amount of instructions executed
+	uint64_t cycle = 0; // amount of cycles
+	uint32_t countinhibit = 0; // stopped counters
+
+	uint32_t debug = -1; // amount of cycles before debug starts
 };
 
